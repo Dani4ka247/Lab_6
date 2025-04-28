@@ -4,39 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/client/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicle/Client.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicle/ClientMain.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/ServerMain.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/Command.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/ExitCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/HelpCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/InsertCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/PassCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/ShowCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/CollectionManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/CommandManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/IdManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/InputValidator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/serveNetwork/Server.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shared/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/model/Coordinates.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/model/FuelType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/model/Vehicle.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/model/VehicleType.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Request.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Response.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/vehicle/Main.java" afterDir="false" />
-    </list>
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Add initial implementation of server-client structure&#10;&#10;Introduced foundational classes, including `Request`, `Response`, and `Command` interfaces for handling client-server communication. Implemented basic commands such as `show`, `insert`, and `help`, along with a manager for command execution. Added Maven configuration and initial collection management functionality." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -52,6 +20,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Dani4ka247/Lab_6",
+    "accountId": "ecfab24a-8bf0-4e01-906b-832e23902161"
+  }
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
@@ -130,6 +104,20 @@
       <option name="presentableId" value="Default" />
       <updated>1745661624198</updated>
     </task>
+    <task id="LOCAL-00001" summary="Add initial implementation of server-client structure&#10;&#10;Introduced foundational classes, including `Request`, `Response`, and `Command` interfaces for handling client-server communication. Implemented basic commands such as `show`, `insert`, and `help`, along with a manager for command execution. Added Maven configuration and initial collection management functionality.">
+      <option name="closed" value="true" />
+      <created>1745881288294</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1745881288294</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Add initial server-client communication framework&#10;&#10;Implemented a basic client-server architecture with serialization. Added support for processing commands using `Request` and `Response` classes. Initialized essential components including `CommandManager`, commands (e.g., `help`, `insert`), and a `CollectionManager` for data operations." />
+    <MESSAGE value="Add initial implementation of server-client structure&#10;&#10;Introduced foundational classes, including `Request`, `Response`, and `Command` interfaces for handling client-server communication. Implemented basic commands such as `show`, `insert`, and `help`, along with a manager for command execution. Added Maven configuration and initial collection management functionality." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add initial implementation of server-client structure&#10;&#10;Introduced foundational classes, including `Request`, `Response`, and `Command` interfaces for handling client-server communication. Implemented basic commands such as `show`, `insert`, and `help`, along with a manager for command execution. Added Maven configuration and initial collection management functionality." />
   </component>
 </project>
