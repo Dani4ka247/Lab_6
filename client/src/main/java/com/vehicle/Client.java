@@ -3,14 +3,16 @@ package com.vehicle;
 import com.vehicle.network.Request;
 import com.vehicle.network.Response;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.Scanner;
 
 public class Client {
     private final String host;
     private final int port;
+    private boolean isConnected = false;
 
     public Client(String host, int port) {
         this.host = host;
@@ -18,61 +20,106 @@ public class Client {
     }
 
     public void start() {
-        System.out.println("Клиент запускается...");
-        Scanner scanner = new Scanner(System.in);
+        // Флаг для контроля работы программы
+        boolean isRunning = true;
 
-        try (Socket serverSocket = new Socket(host, port)) {
-            System.out.println("Подключение к серверу установлено.");
+        while (isRunning) {
+            // Попытка установить соединение
+            try (SocketChannel socketChannel = SocketChannel.open()) {
+                socketChannel.connect(new InetSocketAddress(host, port));
+                isConnected = true;
+                System.out.println("Успешно подключен к серверу.");
 
-            // Поток для отправки запросов
-            ObjectOutputStream output = new ObjectOutputStream(serverSocket.getOutputStream());
-            // Поток для чтения ответов
-            ObjectInputStream input = new ObjectInputStream(serverSocket.getInputStream());
+                // Начинаем взаимодействие
+                isRunning = interactWithServer(socketChannel); // Управляем завершением программы внутри метода
+            } catch (IOException e) {
+                System.err.println("Ошибка подключения к серверу: " + e.getMessage());
+                isConnected = false;
 
-            // Основной цикл для взаимодействия с сервером
-            while (true) {
-                System.out.print("Введите команду: ");
-                String commandLine = scanner.nextLine().trim(); // Убираем пробелы в начале и в конце строки
-
-                if (commandLine.isEmpty()) {
-                    System.out.println("Пустая команда. Попробуйте снова.");
-                    continue;
-                }
-
-                // Разбиение строки на команду и аргумент, если это возможно
-                String[] parts = commandLine.split("\\s+", 2); // Сначала убираем лишние пробелы между словами
-                String command = parts[0]; // Команда
-                String argument = parts.length > 1 ? parts[1] : null; // Аргумент (может быть null)
-
-                if (command.equalsIgnoreCase("exit")) {
-                    System.out.println("Завершение работы клиента.");
+                // Завершаем программу при ручном выходе (иначе пытаемся подключиться снова)
+                if (!isRunning) {
                     break;
                 }
 
+                // Попытка переподключиться через несколько секунд
+                System.out.println("Попытка повторного подключения через 5 секунд...");
                 try {
-                    // Создаём запрос
-                    Request request = new Request(command, argument);
-
-                    // Отправляем запрос на сервер
-                    output.writeObject(request);
-                    output.flush();
-
-                    // Получаем ответ от сервера
-                    Response response = (Response) input.readObject();
-                    System.out.println("Ответ сервера: ");
-                    System.out.println(response.getMessage());
-
-                    if (response.hasData()) {
-                        System.out.println("Дополнительные данные:");
-                        response.getData().forEach(System.out::println);
-                    }
-                } catch (Exception ex) {
-                    System.err.println("Ошибка при обработке команды: " + ex.getMessage());
+                    Thread.sleep(5000); // Задержка между попытками подключения
+                } catch (InterruptedException ie) {
+                    System.err.println("Поток клиента прерван.");
+                    break; // Завершаем программу, если поток был прерван
                 }
             }
+        }
 
-        } catch (Exception e) {
-            System.err.println("Ошибка работы клиента: " + e.getMessage());
+        System.out.println("Клиент завершил свою работу.");
+    }
+
+    private boolean interactWithServer(SocketChannel socketChannel) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (isConnected) {
+            try {
+                System.out.print("Введите команду (или 'exit' для выхода): ");
+                String command = scanner.nextLine();
+
+                if ("exit".equalsIgnoreCase(command)) {
+                    System.out.println("Завершение работы клиента...");
+                    return false; // Устанавливаем флаг завершения
+                }
+
+                Request request = new Request(command, null); // Аргументы можно добавить
+                sendRequest(socketChannel, request);
+
+                Response response = receiveResponse(socketChannel);
+
+                if (response == null) {
+                    System.err.println("Ошибка: сервер не отправил ответ.");
+                    break;
+                }
+
+                System.out.println("Ответ от сервера: " + response.getMessage());
+            } catch (IOException e) {
+                System.err.println("Сервер разорвал соединение. Попытка подключения...");
+                isConnected = false; // Соединение разорвано, выходим из внутреннего цикла
+            }
+        }
+        return true; // По умолчанию продолжаем основную работу
+    }
+
+    private void sendRequest(SocketChannel socketChannel, Request request) throws IOException {
+        if (!socketChannel.isConnected() || request == null) {
+            throw new IOException("Сокет не подключен или некорректный запрос.");
+        }
+
+        try (ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+             ObjectOutputStream objectOut = new ObjectOutputStream(byteOut)) {
+
+            objectOut.writeObject(request);
+            objectOut.flush();
+
+            ByteBuffer buffer = ByteBuffer.wrap(byteOut.toByteArray());
+            while (buffer.hasRemaining()) {
+                socketChannel.write(buffer);
+            }
+        }
+    }
+
+    private Response receiveResponse(SocketChannel socketChannel) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(8192); // Размер буфера 8 KB (или больше, если нужно)
+
+        int bytesRead = socketChannel.read(buffer);
+        if (bytesRead == -1) {
+            throw new IOException("Соединение с сервером разорвано.");
+        }
+
+        buffer.flip();
+
+        try (ObjectInputStream objectInputStream = new ObjectInputStream(
+                new ByteArrayInputStream(buffer.array(), 0, bytesRead))) {
+            return (Response) objectInputStream.readObject();
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Не удалось десериализовать ответ от сервера.", e);
         }
     }
 }

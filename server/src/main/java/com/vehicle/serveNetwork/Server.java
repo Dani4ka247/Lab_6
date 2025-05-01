@@ -1,124 +1,119 @@
 package com.vehicle.serveNetwork;
 
-import com.vehicle.model.Coordinates;
-import com.vehicle.model.FuelType;
-import com.vehicle.model.Vehicle;
-import com.vehicle.model.VehicleType;
 import com.vehicle.network.Request;
 import com.vehicle.network.Response;
-import com.vehicle.managers.CommandManager; // Менеджер команд
-import com.vehicle.managers.CollectionManager; // Менеджер коллекции
+import com.vehicle.managers.CommandManager;
+import com.vehicle.managers.CollectionManager;
 
-import java.io.EOFException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.*;
+import java.util.Iterator;
 
 public class Server {
     private final int port;
+    private CollectionManager collectionManager;
 
     public Server(int port) {
         this.port = port;
-
-        // Инициализируем менеджер коллекции и команд при старте сервера
         initializeManagers();
     }
 
     private void initializeManagers() {
-        // Создаём экземпляр CollectionManager
-        Vehicle vehicle1 = new Vehicle(1,new Coordinates(23F,33),"sd",22F, VehicleType.BOAT, FuelType.ELECTRICITY);
-        Vehicle vehicle2 = new Vehicle(2,new Coordinates(23F,33),"sd",242F, VehicleType.BOAT, FuelType.ELECTRICITY);
-        Vehicle vehicle3 = new Vehicle(3,new Coordinates(23F,33),"sd",2F, VehicleType.BOAT, FuelType.ELECTRICITY);
-
-        CollectionManager collectionManager = new CollectionManager(); // Предполагается, что он есть в проекте
-        collectionManager.put(123,vehicle1);
-        collectionManager.put(22342,vehicle2);
-        collectionManager.put(1,vehicle3);
-
-        // Инициализируем CommandManager с данным CollectionManager
+        collectionManager = new CollectionManager();
         CommandManager.initialize(collectionManager);
-
-        System.out.println("CommandManager успешно инициализирован.");
     }
 
     public void start() {
         System.out.println("Сервер запускается...");
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
+        try (Selector selector = Selector.open();
+             ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
+            serverChannel.bind(new InetSocketAddress(port));
+            serverChannel.configureBlocking(false);
+            serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+
             System.out.println("Сервер ожидает подключения на порту " + port);
 
             while (true) {
-                // Принимаем новое подключение от клиента
-                Socket clientSocket = serverSocket.accept();
-                System.out.println("Клиент подключился: " + clientSocket.getInetAddress());
+                selector.select(); // Ожидаем событий
 
-                // Обработка клиента в отдельном потоке
-                new Thread(() -> processClient(clientSocket)).start();
+                Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+
+                while (keys.hasNext()) {
+                    SelectionKey key = keys.next();
+                    keys.remove();
+
+                    if (key.isAcceptable()) {
+                        acceptClient(serverChannel, selector);
+                    } else if (key.isReadable()) {
+                        processClient(key);
+                    }
+                }
             }
-
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Ошибка работы сервера: " + e.getMessage());
         }
     }
 
-    private void processClient(Socket clientSocket) {
-        try (ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
-             ObjectOutputStream output = new ObjectOutputStream(clientSocket.getOutputStream())) {
+    private void acceptClient(ServerSocketChannel serverChannel, Selector selector) throws IOException {
+        SocketChannel clientChannel = serverChannel.accept();
+        clientChannel.configureBlocking(false);
+        clientChannel.register(selector, SelectionKey.OP_READ);
+        System.out.println("Клиент подключился: " + clientChannel.getRemoteAddress());
+    }
 
-            while (true) {
-                try {
-                    // Читаем запрос от клиента
-                    Request request = (Request) input.readObject();
+    private void processClient(SelectionKey key) {
+        try {
+            SocketChannel clientChannel = (SocketChannel) key.channel();
+            ByteBuffer buffer = ByteBuffer.allocate(8192); // Размер буфера (8 KB, может быть скорректирован)
+            int bytesRead = clientChannel.read(buffer);
 
-                    if (request == null) {
-                        System.out.println("Клиент завершил соединение.");
-                        break;
-                    }
-
-                    System.out.println("Получена команда: " + request.getCommand());
-
-                    // Выполняем команду через CommandManager
-                    Response response = executeCommand(request);
-
-                    // Отправляем ответ клиенту
-                    output.writeObject(response);
-                    output.flush();
-
-                    // Если команда "exit", разрываем соединение
-                    if ("exit".equalsIgnoreCase(request.getCommand())) {
-                        System.out.println("Клиент запросил завершение работы.");
-                        break;
-                    }
-                } catch (EOFException eofException) {
-                    // Клиент закрыл соединение
-                    System.out.println("Клиент закрыл соединение.");
-                    break; // Выходим из цикла
-                } catch (Exception readException) {
-                    System.err.println("Ошибка при обработке клиента: " + readException.getMessage());
-                    break;
-                }
+            // Проверяем, что данные были прочитаны
+            if (bytesRead == -1) {
+                System.out.println("Клиент отсоединился.");
+                clientChannel.close();
+                key.cancel();
+                return;
             }
-        } catch (Exception e) {
+
+            buffer.flip();
+
+            // Попытаемся десериализовать объект Request
+            try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(buffer.array()))) {
+                Request request = (Request) objectInputStream.readObject();
+                System.out.println("Получен запрос: " + request);
+
+                // Выполняем команду
+                Response response = CommandManager.executeRequest(request);
+
+                // Отправляем клиенту ответ
+                sendResponse(clientChannel, response);
+            } catch (ClassNotFoundException | InvalidClassException e) {
+                System.err.println("Ошибка десериализации объекта: " + e.getMessage());
+                sendResponse(clientChannel, Response.error("Некорректные данные запроса."));
+            }
+        } catch (IOException e) {
             System.err.println("Ошибка при обработке клиента: " + e.getMessage());
-        } finally {
-            try {
-                // Закрываем соединение
-                clientSocket.close();
-                System.out.println("Соединение с клиентом закрыто.");
-            } catch (Exception ex) {
-                System.err.println("Ошибка при закрытии соединения: " + ex.getMessage());
-            }
         }
     }
 
-    private Response executeCommand(Request request) {
-        try {
-            // Делегируем выполнение команды CommandManager
-            return CommandManager.executeRequest(request);
-        } catch (Exception e) {
-            // Возвращаем ответ об ошибке, если команда вызвала исключение
-            return Response.serverError(e);
+    private void sendResponse(SocketChannel clientChannel, Response response) {
+        try (ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+             ObjectOutputStream objectOut = new ObjectOutputStream(byteOut)) {
+
+            objectOut.writeObject(response);
+            objectOut.flush();
+
+            byte[] responseData = byteOut.toByteArray();
+            ByteBuffer buffer = ByteBuffer.wrap(responseData);
+
+            while (buffer.hasRemaining()) {
+                clientChannel.write(buffer);
+            }
+        } catch (IOException e) {
+            System.err.println("Ошибка отправки ответа клиенту: " + e.getMessage());
         }
     }
 }

@@ -24,8 +24,16 @@ public class CollectionManager extends HashMap<Integer, Vehicle> {
         return this.values()
                 .stream()
                 .sorted((v1, v2) -> Float.compare(v1.getPower(), v2.getPower()))
-                .map(Vehicle::toString) // Преобразуем в строковое представление
+                .map(Vehicle::toString)
                 .collect(Collectors.joining("\n")); // Объединяем строки, разделяя переносами
+    }
+
+    public String getVehiclesByMinPower(float minimumPower) {
+        return this.values()
+                .stream()
+                .filter(vehicle -> vehicle.getPower() >= minimumPower) // Фильтруем по мощности
+                .map(Vehicle::toString)
+                .collect(Collectors.joining("\n")); // Соединяем строки с переводом на новую строку
     }
 
     public static Vehicle requestVehicleInformation(Scanner scanner, long id) {
