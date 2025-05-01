@@ -4,11 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Remove unused Main class and update workspace configuration.&#10;&#10;The Main class was removed as it is no longer required in the project structure. Additionally, updated workspace.xml with task-related metadata and GitHub integration settings to align with current development needs.">
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="основная логика сервера готова">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/main/java/com/vehicle/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicle/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/CollectionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/CollectionManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/serveNetwork/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/serveNetwork/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,13 +129,22 @@
       <option name="project" value="LOCAL" />
       <updated>1745881377702</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="основная логика сервера готова">
+      <option name="closed" value="true" />
+      <created>1746087108876</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1746087108876</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add initial server-client communication framework&#10;&#10;Implemented a basic client-server architecture with serialization. Added support for processing commands using `Request` and `Response` classes. Initialized essential components including `CommandManager`, commands (e.g., `help`, `insert`), and a `CollectionManager` for data operations." />
     <MESSAGE value="Add initial implementation of server-client structure&#10;&#10;Introduced foundational classes, including `Request`, `Response`, and `Command` interfaces for handling client-server communication. Implemented basic commands such as `show`, `insert`, and `help`, along with a manager for command execution. Added Maven configuration and initial collection management functionality." />
     <MESSAGE value="Remove unused Main class and update workspace configuration.&#10;&#10;The Main class was removed as it is no longer required in the project structure. Additionally, updated workspace.xml with task-related metadata and GitHub integration settings to align with current development needs." />
-    <option name="LAST_COMMIT_MESSAGE" value="Remove unused Main class and update workspace configuration.&#10;&#10;The Main class was removed as it is no longer required in the project structure. Additionally, updated workspace.xml with task-related metadata and GitHub integration settings to align with current development needs." />
+    <MESSAGE value="основная логика сервера готова" />
+    <option name="LAST_COMMIT_MESSAGE" value="основная логика сервера готова" />
   </component>
 </project>

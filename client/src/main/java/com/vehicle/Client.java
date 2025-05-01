@@ -68,7 +68,13 @@ public class Client {
                     return false; // Устанавливаем флаг завершения
                 }
 
-                Request request = new Request(command, null); // Аргументы можно добавить
+                // Разделяем ввод пользователя на команду и аргумент
+                String[] parts = command.trim().split("\\s+", 2);
+                String cmd = parts[0]; // Первая часть - команда
+                String arg = parts.length > 1 ? parts[1] : null; // Вторая часть (если есть) - аргумент
+
+                // Создаем запрос с разделенной командой и аргументом
+                Request request = new Request(cmd, arg);
                 sendRequest(socketChannel, request);
 
                 Response response = receiveResponse(socketChannel);
