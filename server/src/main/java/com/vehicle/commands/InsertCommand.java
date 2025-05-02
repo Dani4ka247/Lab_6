@@ -1,5 +1,6 @@
 package com.vehicle.commands;
 
+import com.vehicle.model.Vehicle;
 import com.vehicle.network.Request;
 import com.vehicle.network.Response;
 import com.vehicle.managers.CollectionManager;
@@ -15,11 +16,19 @@ public class InsertCommand implements Command {
     public Response execute(Request request) {
         String argument = request.getArgument();
         if (argument == null || argument.isEmpty()) {
-            return Response.error("Ошибка: команда 'insert' требует аргумент.");
+            return Response.error("Ошибка: команда 'insert' требует указания ключа.");
         }
 
-        //collectionManager.insert(argument); // Добавляем элемент в коллекцию
-        return Response.success("Элемент '" + argument + "' успешно добавлен в коллекцию.");
+        Vehicle vehicle = request.getVehicle();
+        if (vehicle == null) {
+            // Возвращаем сообщение с требованием объекта Vehicle
+            return new Response(true, "Серверу требуется объект Vehicle для завершения команды.", true);
+        }
+
+        // Добавление объекта в коллекцию
+        collectionManager.put(Integer.parseInt(argument), vehicle);
+
+        return Response.success("Объект успешно добавлен в коллекцию.");
     }
 
     @Override

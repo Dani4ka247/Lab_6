@@ -4,9 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="основная логика сервера готова">
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="подправлена логика клиента">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/main/java/com/vehicle/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicle/Client.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/InsertCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/InsertCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/CollectionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/managers/CollectionManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/IdManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/managers/IdManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/InputValidator.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/managers/InputValidator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/serveNetwork/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/serveNetwork/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Request.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Request.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Response.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Response.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,7 +77,7 @@
       <recent name="$PROJECT_DIR$/shared/src/main/java" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.ClientMain">
+  <component name="RunManager" selected="Application.ServerMain">
     <configuration name="ClientMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.vehicle.ClientMain" />
       <module name="client" />
@@ -137,7 +144,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746087108876</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="подправлена логика клиента">
+      <option name="closed" value="true" />
+      <created>1746088213596</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1746088213596</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -145,6 +160,7 @@
     <MESSAGE value="Add initial implementation of server-client structure&#10;&#10;Introduced foundational classes, including `Request`, `Response`, and `Command` interfaces for handling client-server communication. Implemented basic commands such as `show`, `insert`, and `help`, along with a manager for command execution. Added Maven configuration and initial collection management functionality." />
     <MESSAGE value="Remove unused Main class and update workspace configuration.&#10;&#10;The Main class was removed as it is no longer required in the project structure. Additionally, updated workspace.xml with task-related metadata and GitHub integration settings to align with current development needs." />
     <MESSAGE value="основная логика сервера готова" />
-    <option name="LAST_COMMIT_MESSAGE" value="основная логика сервера готова" />
+    <MESSAGE value="подправлена логика клиента" />
+    <option name="LAST_COMMIT_MESSAGE" value="подправлена логика клиента" />
   </component>
 </project>

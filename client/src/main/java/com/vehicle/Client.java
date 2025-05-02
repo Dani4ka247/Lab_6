@@ -1,5 +1,7 @@
 package com.vehicle;
 
+import com.vehicle.managers.CollectionManager;
+import com.vehicle.model.Vehicle;
 import com.vehicle.network.Request;
 import com.vehicle.network.Response;
 
@@ -55,42 +57,67 @@ public class Client {
         System.out.println("Клиент завершил свою работу.");
     }
 
-    private boolean interactWithServer(SocketChannel socketChannel) {
+    private boolean interactWithServer(SocketChannel socketChannel) throws IOException {
         Scanner scanner = new Scanner(System.in);
 
-        while (isConnected) {
-            try {
-                System.out.print("Введите команду (или 'exit' для выхода): ");
-                String command = scanner.nextLine();
+        while (true) {
+            System.out.print("Введите команду: ");
+            String input = scanner.nextLine().trim();
 
-                if ("exit".equalsIgnoreCase(command)) {
-                    System.out.println("Завершение работы клиента...");
-                    return false; // Устанавливаем флаг завершения
-                }
+            if (input.isEmpty()) {
+                System.out.println("Команда не может быть пустой. Введите 'help' для помощи.");
+                continue;
+            }
 
-                // Разделяем ввод пользователя на команду и аргумент
-                String[] parts = command.trim().split("\\s+", 2);
-                String cmd = parts[0]; // Первая часть - команда
-                String arg = parts.length > 1 ? parts[1] : null; // Вторая часть (если есть) - аргумент
+            // Разделяем команду и аргумент
+            String[] parts = input.split(" ", 2);
+            String command = parts[0];
+            String argument = parts.length > 1 ? parts[1] : null;
 
-                // Создаем запрос с разделенной командой и аргументом
-                Request request = new Request(cmd, arg);
-                sendRequest(socketChannel, request);
+            // Отправляем запрос на сервер
+            Request request = new Request(command, argument);
+            sendRequest(socketChannel, request);
 
-                Response response = receiveResponse(socketChannel);
+            // Получаем ответ от сервера
+            Response response = receiveResponse(socketChannel);
+            System.out.println("Ответ сервера: " + response.getMessage());
 
-                if (response == null) {
-                    System.err.println("Ошибка: сервер не отправил ответ.");
-                    break;
-                }
+            // Если сервер требует объект, запрашиваем у пользователя
+            if (response.requiresVehicle()) {
+                System.out.println("Для выполнения команды нужен объект Vehicle.");
 
-                System.out.println("Ответ от сервера: " + response.getMessage());
-            } catch (IOException e) {
-                System.err.println("Сервер разорвал соединение. Попытка подключения...");
-                isConnected = false; // Соединение разорвано, выходим из внутреннего цикла
+                // Используем CollectionManager.requestVehicleInformation для создания объекта
+                Vehicle vehicle = CollectionManager.requestVehicleInformation(scanner, 0); // ID = 0 (например)
+
+                // Отправляем новый запрос с объектом
+                Request vehicleRequest = new Request("insert", argument);
+                vehicleRequest.setVehicle(vehicle);
+                sendRequest(socketChannel, vehicleRequest);
+
+                // Получаем окончательный ответ
+                Response finalResponse = receiveResponse(socketChannel);
+                System.out.println("Ответ сервера: " + finalResponse.getMessage());
             }
         }
-        return true; // По умолчанию продолжаем основную работу
+    }
+
+    private void sendObject(SocketChannel socketChannel, Serializable object) throws IOException {
+        // Сериализация объекта в массив байтов
+        byte[] data = serialize(object);
+
+        // Создаем буфер для отправки данных
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        socketChannel.write(buffer);
+    }
+
+    // Сериализация объекта в массив байтов
+    private byte[] serialize(Serializable object) throws IOException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+            oos.writeObject(object);
+            oos.flush();
+            return baos.toByteArray();
+        }
     }
 
     private void sendRequest(SocketChannel socketChannel, Request request) throws IOException {
@@ -112,20 +139,31 @@ public class Client {
     }
 
     private Response receiveResponse(SocketChannel socketChannel) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(8192); // Размер буфера 8 KB (или больше, если нужно)
-
+        // Создаем буфер для чтения
+        ByteBuffer buffer = ByteBuffer.allocate(4096);
         int bytesRead = socketChannel.read(buffer);
+
+        // Проверяем, произошло ли закрытие соединения
         if (bytesRead == -1) {
-            throw new IOException("Соединение с сервером разорвано.");
+            throw new EOFException("Соединение с сервером было закрыто.");
         }
 
-        buffer.flip();
+        // Декодируем ответ из буфера
+        buffer.flip(); // Переходим в режим чтения
+        byte[] data = new byte[buffer.remaining()];
+        buffer.get(data);
 
-        try (ObjectInputStream objectInputStream = new ObjectInputStream(
-                new ByteArrayInputStream(buffer.array(), 0, bytesRead))) {
-            return (Response) objectInputStream.readObject();
+        // Десериализация ответа
+        return deserialize(data);
+    }
+
+    // Десериализация байтов в объект
+    private Response deserialize(byte[] data) throws IOException {
+        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
+            return (Response) ois.readObject();
         } catch (ClassNotFoundException e) {
-            throw new IOException("Не удалось десериализовать ответ от сервера.", e);
+            throw new IOException("Ошибка при десериализации объекта", e);
         }
     }
 }
+

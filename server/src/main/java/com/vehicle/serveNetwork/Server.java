@@ -1,5 +1,6 @@
 package com.vehicle.serveNetwork;
 
+import com.vehicle.model.Vehicle;
 import com.vehicle.network.Request;
 import com.vehicle.network.Response;
 import com.vehicle.managers.CommandManager;
@@ -26,24 +27,27 @@ public class Server {
     }
 
     public void start() {
-        System.out.println("Сервер запускается...");
+        initializeManagers(); // Инициализация объектов CollectionManager и CommandManager
+        System.out.println("Сервер инициализирован. Запуск...");
 
-        try (Selector selector = Selector.open();
-             ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
+        try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
             serverChannel.bind(new InetSocketAddress(port));
             serverChannel.configureBlocking(false);
+
+            Selector selector = Selector.open();
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            System.out.println("Сервер ожидает подключения на порту " + port);
+            System.out.println("Сервер запущен и ожидает подключения на порту " + port);
 
             while (true) {
-                selector.select(); // Ожидаем событий
-
+                selector.select(); // Ожидание событий
                 Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
 
                 while (keys.hasNext()) {
                     SelectionKey key = keys.next();
                     keys.remove();
+
+                    if (!key.isValid()) continue;
 
                     if (key.isAcceptable()) {
                         acceptClient(serverChannel, selector);
@@ -53,7 +57,7 @@ public class Server {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Ошибка работы сервера: " + e.getMessage());
+            System.err.println("Ошибка при запуске сервера: " + e.getMessage());
         }
     }
 
@@ -65,55 +69,66 @@ public class Server {
     }
 
     private void processClient(SelectionKey key) {
+        SocketChannel clientChannel = (SocketChannel) key.channel();
         try {
-            SocketChannel clientChannel = (SocketChannel) key.channel();
-            ByteBuffer buffer = ByteBuffer.allocate(8192); // Размер буфера (8 KB, может быть скорректирован)
+            // Создаем буфер для чтения данных
+            ByteBuffer buffer = ByteBuffer.allocate(4096);
             int bytesRead = clientChannel.read(buffer);
 
-            // Проверяем, что данные были прочитаны
+            // Проверяем закрытие соединения
             if (bytesRead == -1) {
-                System.out.println("Клиент отсоединился.");
                 clientChannel.close();
-                key.cancel();
+                System.out.println("Клиент отключился.");
                 return;
             }
 
-            buffer.flip();
+            // Декодируем запрос из буфера
+            buffer.flip(); // Переходим в режим чтения
+            byte[] data = new byte[buffer.remaining()];
+            buffer.get(data);
 
-            // Попытаемся десериализовать объект Request
-            try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(buffer.array()))) {
-                Request request = (Request) objectInputStream.readObject();
-                System.out.println("Получен запрос: " + request);
+            // Десериализация запроса
+            Request request = deserialize(data);
+            System.out.println("Получен запрос от клиента: " + request);
 
-                // Выполняем команду
-                Response response = CommandManager.executeRequest(request);
+            // Создаем ответ
+            Response response = Response.success("Запрос обработан успешно");
+            sendResponse(clientChannel, CommandManager.executeRequest(request));
 
-                // Отправляем клиенту ответ
-                sendResponse(clientChannel, response);
-            } catch (ClassNotFoundException | InvalidClassException e) {
-                System.err.println("Ошибка десериализации объекта: " + e.getMessage());
-                sendResponse(clientChannel, Response.error("Некорректные данные запроса."));
-            }
         } catch (IOException e) {
-            System.err.println("Ошибка при обработке клиента: " + e.getMessage());
+            e.printStackTrace();
+            try {
+                clientChannel.close();
+            } catch (IOException ignored) {
+            }
         }
     }
 
-    private void sendResponse(SocketChannel clientChannel, Response response) {
-        try (ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-             ObjectOutputStream objectOut = new ObjectOutputStream(byteOut)) {
+    // Десериализация байтов в объект
+    private Request deserialize(byte[] data) throws IOException {
+        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
+            return (Request) ois.readObject();
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Ошибка при десериализации объекта", e);
+        }
+    }
 
-            objectOut.writeObject(response);
-            objectOut.flush();
+    private void sendResponse(SocketChannel clientChannel, Response response) throws IOException {
+        // Сериализация ответа в массив байтов
+        byte[] data = serialize(response);
 
-            byte[] responseData = byteOut.toByteArray();
-            ByteBuffer buffer = ByteBuffer.wrap(responseData);
+        // Создаем буфер и пишем данные в канал
+        ByteBuffer buffer = ByteBuffer.wrap(data); // Оборачиваем данные в буфер
+        clientChannel.write(buffer);
+    }
 
-            while (buffer.hasRemaining()) {
-                clientChannel.write(buffer);
-            }
-        } catch (IOException e) {
-            System.err.println("Ошибка отправки ответа клиенту: " + e.getMessage());
+    // Сериализация объекта в массив байтов
+    private byte[] serialize(Response response) throws IOException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+            oos.writeObject(response);
+            oos.flush();
+            return baos.toByteArray();
         }
     }
 }
