@@ -19,16 +19,17 @@ public class Server {
     public Server(int port) {
         this.port = port;
         initializeManagers();
+
     }
 
     private void initializeManagers() {
         collectionManager = new CollectionManager();
         CommandManager.initialize(collectionManager);
+        CommandManager.executeRequest(new Request("load", null));
     }
 
     public void start() {
-        initializeManagers(); // Инициализация объектов CollectionManager и CommandManager
-        System.out.println("Сервер инициализирован. Запуск...");
+        System.out.println("Сервер инициализирован. Запуск...");//todo потоки а не каналы
 
         try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
             serverChannel.bind(new InetSocketAddress(port));

@@ -28,6 +28,7 @@ public class Client {
         while (isRunning) {
             // Попытка установить соединение
             try (SocketChannel socketChannel = SocketChannel.open()) {
+
                 socketChannel.connect(new InetSocketAddress(host, port));
                 isConnected = true;
                 System.out.println("Успешно подключен к серверу.");
@@ -51,9 +52,8 @@ public class Client {
                     System.err.println("Поток клиента прерван.");
                     break; // Завершаем программу, если поток был прерван
                 }
-            }
+            }//todo неблок режим
         }
-
         System.out.println("Клиент завершил свою работу.");
     }
 
@@ -73,7 +73,11 @@ public class Client {
             String[] parts = input.split(" ", 2);
             String command = parts[0];
             String argument = parts.length > 1 ? parts[1] : null;
-
+            if ("exit".equalsIgnoreCase(command)) {
+                System.out.println("Завершение работы клиента...");
+                isConnected = false;
+                return false; // Завершаем метод, чтобы разорвать цикл работы
+            }
             // Отправляем запрос на сервер
             Request request = new Request(command, argument);
             sendRequest(socketChannel, request);

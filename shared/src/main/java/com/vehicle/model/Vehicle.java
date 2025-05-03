@@ -53,8 +53,8 @@ public class Vehicle implements Serializable,Comparable<Vehicle> {
 
     public String toJson() {
         return "{\"id\" : " + id +
-                ", \"name\" : " + name +
-                ", \"x\" : " + coordinates.getX() +
+                ", \"name\" : \"" + name +
+                "\", \"x\" : " + coordinates.getX() +
                 ", \"y\" : " + coordinates.getY() +
                 ", \"creationDate\" : \"" + creationDate+
                 "\", \"enginePower\" : " + enginePower +

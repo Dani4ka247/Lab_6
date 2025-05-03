@@ -1,5 +1,6 @@
 package com.vehicle.commands;
 
+import com.vehicle.managers.CommandManager;
 import com.vehicle.network.Request;
 import com.vehicle.network.Response;
 import com.vehicle.managers.CollectionManager;
@@ -14,7 +15,7 @@ public class ExitCommand implements Command {
     @Override
     public Response execute(Request request) {
         // Здесь сохраняем коллекцию, если это необходимо
-        //collectionManager.saveCollectionToFile();
+        CommandManager.executeRequest(new Request("save",null));
 
         // Отправляем клиенту сообщение о завершении работы сервера
         Response response = Response.success("Сервер успешно завершил работу. Коллекция сохранена.");

@@ -4,16 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="подправлена логика клиента">
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="готова логика insert !">
+      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/LoadCommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/SaveCommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/FileManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/main/java/com/vehicle/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicle/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/InsertCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/InsertCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/CollectionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/managers/CollectionManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/IdManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/managers/IdManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/InputValidator.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/managers/InputValidator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/ExitCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/commands/ExitCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/CommandManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/managers/CommandManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicle/serveNetwork/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicle/serveNetwork/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Request.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Request.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Response.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/network/Response.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/model/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicle/model/Vehicle.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -152,7 +152,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746088213596</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="готова логика insert !">
+      <option name="closed" value="true" />
+      <created>1746167906344</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1746167906344</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -161,6 +169,7 @@
     <MESSAGE value="Remove unused Main class and update workspace configuration.&#10;&#10;The Main class was removed as it is no longer required in the project structure. Additionally, updated workspace.xml with task-related metadata and GitHub integration settings to align with current development needs." />
     <MESSAGE value="основная логика сервера готова" />
     <MESSAGE value="подправлена логика клиента" />
-    <option name="LAST_COMMIT_MESSAGE" value="подправлена логика клиента" />
+    <MESSAGE value="готова логика insert !" />
+    <option name="LAST_COMMIT_MESSAGE" value="готова логика insert !" />
   </component>
 </project>
