@@ -1,6 +1,7 @@
 package com.vehicleServer.managers;
 
-import com.vehicleShared.commands.*;
+
+import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 import com.vehicleServer.commands.*;
