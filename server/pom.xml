@@ -45,7 +45,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.vehicle.server.ServerMain</mainClass>
+                            <mainClass>com.vehicleShared.server.ServerMain</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
