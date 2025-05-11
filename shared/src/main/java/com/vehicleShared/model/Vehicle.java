@@ -33,6 +33,15 @@ public class Vehicle implements Serializable,Comparable<Vehicle> {
         this.type = type;
         this.fuelType = fuelType;
     }
+    public Vehicle(long id, Vehicle vehicle) {
+        this.id = id;
+        this.name = vehicle.name;
+        this.coordinates = vehicle.coordinates;
+        this.creationDate = ZonedDateTime.now();
+        this.enginePower = (vehicle.enginePower > 0 ? vehicle.enginePower : 0);
+        this.type = vehicle.type;
+        this.fuelType = vehicle.fuelType;
+    }
 
     @Override
     public int compareTo(Vehicle other) {

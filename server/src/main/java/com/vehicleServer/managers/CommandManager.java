@@ -41,6 +41,16 @@ public class CommandManager {
         commands.put("shutdown", new ExitCommand(collectionManager));
         commands.put("save", new SaveCommand(collectionManager,filePath));
         commands.put("load", new LoadCommand(collectionManager,filePath));
+        commands.put("clear", new ClearCommand(collectionManager));
+        commands.put("history", new HistoryCommand());
+        commands.put("info", new InfoCommand(collectionManager));
+        commands.put("remove_all_by_engine_power", new RemoveByPower(collectionManager));
+        commands.put("remove_greater_key", new RemoveGreaterKey(collectionManager));
+        commands.put("remove", new RemoveKeyCommand(collectionManager));
+        commands.put("filter_greater_than_engine_power", new ShowByPower(collectionManager));
+        commands.put("sum_of_engine_power", new SumOfPower(collectionManager));
+        commands.put("replace_if_lower", new ReplaceIfLowerCommand(collectionManager));
+        commands.put("update", new UpdateCommand(collectionManager));
         commands.put("", new PassCommand()); // Заглушка для пустого ввода
     }
 
@@ -65,7 +75,9 @@ public class CommandManager {
             return Response.error("Ошибка: команда '" + commandName + "' не найдена. Используйте 'help' для получения списка доступных команд.");
         }
 
+
         // Выполняем команду и возвращаем её результат
+        HistoryCommand.addToHistory(request.getCommand());
         return command.execute(request);
     }
 }

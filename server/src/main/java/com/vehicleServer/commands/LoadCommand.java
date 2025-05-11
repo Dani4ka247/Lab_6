@@ -40,7 +40,6 @@ public class LoadCommand implements Command {
                     return new Response(false, "Некорректный формат данных в файле.");
                 }
 
-                // Парсинг данных
                 int key = Integer.parseInt(tokens[0].trim());
                 long id = Long.parseLong(getValue(tokens[1]));
                 String name = getValue(tokens[2]);
@@ -55,12 +54,10 @@ public class LoadCommand implements Command {
                 VehicleType vehicleType = VehicleType.valueOf(getValue(tokens[7]));
                 FuelType fuelType = FuelType.valueOf(getValue(tokens[8]).replace("}", ""));
 
-                // Обновление ID, если необходимо
                 if (IdManager.getId() <= id) {
                     IdManager.setId(id + 1);
                 }
 
-                // Добавление элемента в коллекцию
                 collection.put(key, new Vehicle(
                         id, coordinates, creationDate, name, enginePower, vehicleType, fuelType
                 ));

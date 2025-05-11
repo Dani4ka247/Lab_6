@@ -13,6 +13,7 @@ public class ShowCommand implements Command {
 
     @Override
     public Response execute(Request request) {
+        if (collectionManager.isEmpty()) {return Response.success("коллекция пуста");}
         return Response.success(collectionManager.getSortedVehiclesByPower());
     }
 

@@ -14,17 +14,14 @@ public class ExitCommand implements Command {
 
     @Override
     public Response execute(Request request) {
-        // Здесь сохраняем коллекцию, если это необходимо
         CommandManager.executeRequest(new Request("save",null));
 
-        // Отправляем клиенту сообщение о завершении работы сервера
         Response response = Response.success("Сервер успешно завершил работу. Коллекция сохранена.");
 
-        // Запускаем завершение работы сервера в отдельном потоке
         new Thread(() -> {
             try {
-                Thread.sleep(100); // Ждем, чтобы ответ клиенту успел отправиться
-                System.exit(0); // Завершаем программу
+                Thread.sleep(100);
+                System.exit(0);
             } catch (InterruptedException ignored) {}
         }).start();
 

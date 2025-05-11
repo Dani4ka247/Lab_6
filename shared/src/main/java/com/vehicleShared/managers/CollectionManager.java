@@ -1,15 +1,11 @@
 package com.vehicleShared.managers;
 
-
-
-
 import com.vehicleShared.model.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.stream.Collectors;
-
 
 public class CollectionManager extends HashMap<Integer, Vehicle> {
 
@@ -20,19 +16,19 @@ public class CollectionManager extends HashMap<Integer, Vehicle> {
     }
 
     public String getSortedVehiclesByPower() {
-        return this.values()
+        return this.entrySet()
                 .stream()
-                .sorted((v1, v2) -> Float.compare(v1.getPower(), v2.getPower()))
-                .map(Vehicle::toString)
-                .collect(Collectors.joining("\n")); // Объединяем строки, разделяя переносами
+                .sorted((e1, e2) -> Float.compare(e1.getValue().getPower(), e2.getValue().getPower()))
+                .map(entry -> entry.getKey() + " : " + entry.getValue().toString())
+                .collect(Collectors.joining("\n"));
     }
 
     public String getVehiclesByMinPower(float minimumPower) {
-        return this.values()
+        return this.entrySet()
                 .stream()
-                .filter(vehicle -> vehicle.getPower() >= minimumPower) // Фильтруем по мощности
-                .map(Vehicle::toString)
-                .collect(Collectors.joining("\n")); // Соединяем строки с переводом на новую строку
+                .filter(entry -> entry.getValue().getPower() >= minimumPower)
+                .map(entry -> entry.getKey() + " : " + entry.getValue().toString())
+                .collect(Collectors.joining("\n"));
     }
 
     public static Vehicle requestVehicleInformation(Scanner scanner, long id) {

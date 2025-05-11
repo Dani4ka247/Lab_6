@@ -1,5 +1,6 @@
 package com.vehicleServer.commands;
 
+import com.vehicleShared.managers.IdManager;
 import com.vehicleShared.model.Vehicle;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
@@ -21,12 +22,10 @@ public class InsertCommand implements Command {
 
         Vehicle vehicle = request.getVehicle();
         if (vehicle == null) {
-            // Возвращаем сообщение с требованием объекта Vehicle
             return new Response(true, "Серверу требуется объект Vehicle для завершения команды.", true);
         }
 
-        // Добавление объекта в коллекцию
-        collectionManager.put(Integer.parseInt(argument), vehicle);
+        collectionManager.put(Integer.parseInt(argument), new Vehicle(IdManager.getUnicId(),vehicle));
 
         return Response.success("Объект успешно добавлен в коллекцию.");
     }

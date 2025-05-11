@@ -11,7 +11,7 @@ public class InputValidator {
             String input = scanner.nextLine();
 
             if (input.isEmpty()) {
-                System.out.println("Пиши громче ничего не видно");
+                System.out.println("Странно, ничего не увидел, напиши ка еще раз");
                 continue;
             }
             try {
