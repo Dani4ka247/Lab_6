@@ -1,138 +1,86 @@
 package com.vehicleServer.managers;
 
-import com.vehicleServer.commands.Command;
 import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
+import com.vehicleShared.model.*;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-/**
- * FileManager предназначен для работы с файлами и скриптами. Функционал включает:
- * - Выполнение скриптов.
- * - Чтение команд из файла.
- * - Управление историей файлов для предотвращения рекурсии.
- */
 public class FileManager {
+    private static final Set<String> fileHistory = new HashSet<>();
+    private static final int MAX_VEHICLE_LINES = 5; // name, coordinates, enginePower, vehicleType, fuelType
+    private static final Set<String> VEHICLE_COMMANDS = Set.of("insert", "update", "replace_if_lower");
 
-    private static Set<String> fileHistory = new HashSet<>();
-    private static String parameter;
-    private static String command;
-
-    /**
-     * Выполняет команды из файла, обрабатывая их построчно.
-     *
-     * @param scanner   Сканнер файла для обработки строк.
-     * @param filePath  Путь к выполняемому скрипту.
-     * @param commands  Словарь доступных команд.
-     * @param collection Менеджер коллекции.
-     */
-    public static void program(Scanner scanner, String filePath, Map<String, Command> commands, CollectionManager collection) {
-        while (scanner.hasNext()) {
-            String line = scanner.nextLine();
-            executionCommand(line, commands, collection);
-        }
-        fileHistory.remove(filePath);
-    }
-
-    /**
-     * Начинает выполнение скрипта из указанного файла.
-     *
-     * @param filePath  Путь к файлу.
-     * @param collection Контроллер коллекции.
-     * @param commands  Доступные команды.
-     */
-    public static void start(String filePath, CollectionManager collection, Map<String, Command> commands) {
+    public static List<Response> executeScript(String filePath, CollectionManager collectionManager) {
+        List<Response> responses = new ArrayList<>();
         if (fileHistory.contains(filePath)) {
-            System.out.println("Предотвращена рекурсия: файл уже выполняется.");
-            return;
+            responses.add(Response.error("Ошибка: обнаружено рекурсивное выполнение файла " + filePath + "."));
+            return responses;
         }
 
         fileHistory.add(filePath);
-
-        try (Scanner scanner = new Scanner(new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
-            program(scanner, filePath, commands, collection);
-        } catch (FileNotFoundException e) {
-            System.out.println("Файл не найден: " + filePath);
-        } catch (Exception e) {
-            System.out.println("Ошибка выполнения скрипта: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Парсит строку команды и выполняет её.
-     *
-     * @param text       Текст команды.
-     * @param commands   Карта доступных команд.
-     * @param collection Контроллер коллекции.
-     */
-    public static void executionCommand(String text, Map<String, Command> commands, CollectionManager collection) {
-        String[] tokens = getTokens(text);
-        Command command = commands.get(tokens[0]);
-        if (command == null) {
-            System.out.println("Неизвестная команда: " + tokens[0]);
-            return;
-        }
-
-        try {
-            Request request = new Request(tokens[0], tokens.length > 1 ? tokens[1] : null);
-            Response response = command.execute(request);
-            System.out.println(response.getMessage());
-        } catch (Exception e) {
-            System.out.println("Ошибка выполнения команды: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Делит текст команды на токены.
-     *
-     * @param text Текст команды.
-     * @return Массив из имени команды и аргумента.
-     */
-    public static String[] getTokens(String text) {
-        String[] tokens = text.split(" ", 2);
-        command = tokens[0];
-        parameter = tokens.length > 1 ? tokens[1] : null;
-        return tokens;
-    }
-
-    /**
-     * Читает содержимое файла в строку.
-     *
-     * @param filePath Путь к файлу.
-     * @return Содержимое файла в виде строки.
-     * @throws IOException Ошибка при чтении.
-     */
-    public static String readFile(String filePath) throws IOException {
-        StringBuilder content = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
             String line;
+            List<String> vehicleLines = new ArrayList<>();
             while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                String[] tokens = line.split(" ", 2);
+                String commandName = tokens[0];
+                String argument = tokens.length > 1 ? tokens[1] : null;
+
+                if (VEHICLE_COMMANDS.contains(commandName)) {
+                    vehicleLines.clear();
+                    for (int i = 0; i < MAX_VEHICLE_LINES && (line = reader.readLine()) != null; i++) {
+                        vehicleLines.add(line.trim());
+                    }
+                    Vehicle vehicle = parseVehicle(vehicleLines);
+                    if (vehicle == null) {
+                        responses.add(Response.error("Ошибка: неверный формат данных Vehicle для команды "
+                                + commandName));
+                        continue;
+                    }
+                    Request request = new Request(commandName, argument);
+                    request.setVehicle(vehicle);
+                    responses.add(CommandManager.executeRequest(request));
+                } else {
+                    Request request = new Request(commandName, argument);
+                    responses.add(CommandManager.executeRequest(request));
+                }
             }
+        } catch (IOException e) {
+            responses.add(Response.error("Ошибка при чтении файла " + filePath + ": " + e.getMessage()));
+        } finally {
+            fileHistory.remove(filePath);
         }
-        return content.toString().trim();
+        return responses;
     }
 
-    /**
-     * Возвращает последний аргумент команды.
-     *
-     * @return Аргумент команды.
-     */
-    public static String getParameter() {
-        return parameter;
+    private static Vehicle parseVehicle(List<String> lines) {
+        if (lines.size() < MAX_VEHICLE_LINES) {
+            return null;
+        }
+        try {
+            String name = lines.get(0);
+            String[] coordParts = lines.get(1).split(",");
+            Coordinates coordinates = new Coordinates(
+                    Float.parseFloat(coordParts[0].trim()),
+                    Integer.parseInt(coordParts[1].trim())
+            );
+            float enginePower = Float.parseFloat(lines.get(2));
+            VehicleType vehicleType = VehicleType.values()[Integer.parseInt(lines.get(3).trim()) - 1];
+            FuelType fuelType = FuelType.values()[Integer.parseInt(lines.get(4).trim()) - 1];
+            return new Vehicle(0, coordinates, name, enginePower, vehicleType, fuelType); // id игнорируется
+        } catch (Exception e) {
+            return null;
+        }
     }
-
-    /**
-     * Возвращает текущую команду.
-     *
-     * @return Текущая команда.
-     */
-    public static String getCommand() {
-        return command;
-    }
-
 }

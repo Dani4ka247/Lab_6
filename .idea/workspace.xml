@@ -4,28 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="исправлены ошибки импортов">
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ClearCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/HistoryCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InfoCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveByPower.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveGreaterKey.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveKeyCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ReplaceIfLowerCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowByPower.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/SumOfPower.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/UpdateCommand.java" afterDir="false" />
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="доделаны основные коменды кроме команд связанных с файлом">
+      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ExecuteFileCommand.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/main/java/com/vehicleClient/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicleClient/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ExitCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ExitCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/HelpCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/HelpCommand.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/LoadCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/LoadCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowCommand.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/serveNetwork/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/serveNetwork/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/CollectionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/CollectionManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/InputValidator.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/InputValidator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/model/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/model/Vehicle.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/FileManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/FileManager.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -200,7 +186,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746894963527</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="доделаны основные коменды кроме команд связанных с файлом">
+      <option name="closed" value="true" />
+      <created>1746993231418</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1746993231418</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -212,6 +206,7 @@
     <MESSAGE value="готова логика insert !" />
     <MESSAGE value="изменена иерархия" />
     <MESSAGE value="исправлены ошибки импортов" />
-    <option name="LAST_COMMIT_MESSAGE" value="исправлены ошибки импортов" />
+    <MESSAGE value="доделаны основные коменды кроме команд связанных с файлом" />
+    <option name="LAST_COMMIT_MESSAGE" value="доделаны основные коменды кроме команд связанных с файлом" />
   </component>
 </project>

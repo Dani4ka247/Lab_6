@@ -13,7 +13,7 @@ public class CommandManager {
     private static final Map<String, Command> commands = new HashMap<>(); // Список всех команд
     private static CollectionManager collectionManager;
     private static String filePath;
-    private Command saveCommand;
+
 
 
     /**
@@ -51,6 +51,7 @@ public class CommandManager {
         commands.put("sum_of_engine_power", new SumOfPower(collectionManager));
         commands.put("replace_if_lower", new ReplaceIfLowerCommand(collectionManager));
         commands.put("update", new UpdateCommand(collectionManager));
+        commands.put("execute_script", new ExecuteFileCommand(collectionManager));///Users/mac/scrypt.txt
         commands.put("", new PassCommand()); // Заглушка для пустого ввода
     }
 

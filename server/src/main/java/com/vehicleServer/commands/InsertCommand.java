@@ -22,7 +22,8 @@ public class InsertCommand implements Command {
 
         Vehicle vehicle = request.getVehicle();
         if (vehicle == null) {
-            return new Response(true, "Серверу требуется объект Vehicle для завершения команды.", true);
+            return new Response(true,
+                    "Серверу требуется объект Vehicle для завершения команды.", true);
         }
 
         collectionManager.put(Integer.parseInt(argument), new Vehicle(IdManager.getUnicId(),vehicle));

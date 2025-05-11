@@ -8,6 +8,12 @@ import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 import java.time.ZonedDateTime;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+
 public class LoadCommand implements Command {
 
     private final CollectionManager collection;
@@ -20,20 +26,25 @@ public class LoadCommand implements Command {
 
     @Override
     public Response execute(Request request) {
-        String file;
-        try {
-            file = FileManager.readFile(filePath);
-        } catch (Exception e) {
+        StringBuilder file = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                file.append(line).append("\n");
+            }
+        } catch (IOException e) {
             return new Response(false, "Ошибка загрузки файла: " + e.getMessage());
         }
 
         // Обработка содержимого файла
-        file = file.split("\\[\n")[1].split("\\]\n")[0];
-        if (file.endsWith("\n  ")) {
-            file = file.substring(0, file.length() - 3);
+        String content = file.toString();
+        content = content.split("\\[\n")[1].split("\\]\n")[0];
+        if (content.endsWith("\n  ")) {
+            content = content.substring(0, content.length() - 3);
         }
 
-        for (String line : file.split("\n  ")) {
+        for (String line : content.split("\n  ")) {
             try {
                 String[] tokens = line.split(",");
                 if (tokens.length != 9) {

@@ -14,14 +14,14 @@ public class HelpCommand implements Command {
 
     @Override
     public Response execute(Request request) {
-        StringBuilder result = new StringBuilder("Доступные команды:\n");
-        commands.forEach((name, command) -> result.append("- ").append(name).append(": ").append(command.getDescription()).append("\n"));
-
-        return Response.success(result.toString());
+        StringBuilder helpMessage = new StringBuilder("Доступные команды:\n");
+        commands.forEach((name, command) ->
+                helpMessage.append(name).append(": ").append(command.getDescription()).append("\n"));
+        return Response.success(helpMessage.toString());
     }
 
     @Override
     public String getDescription() {
-        return "Отображает список доступных команд с их описаниями.";
+        return "Выводит справку по всем доступным командам.";
     }
 }
