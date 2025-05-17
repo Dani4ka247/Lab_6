@@ -1,6 +1,6 @@
 package com.vehicleServer;
 
-import com.vehicleServer.serveNetwork.Server;
+import com.vehicleServer.serverNetwork.Server;
 
 public class ServerMain {
     public static void main(String[] args) {

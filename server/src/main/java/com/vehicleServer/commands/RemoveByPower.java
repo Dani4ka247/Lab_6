@@ -25,10 +25,10 @@ public class RemoveByPower implements Command {
         try {
             float power = Float.parseFloat(argument);
             List<Integer> keysToRemove = collectionManager.entrySet()
-                    .stream()
-                    .filter(entry -> entry.getValue().getPower() == power)
+                    .stream()//источник
+                    .filter(entry -> entry.getValue().getPower() == power)//промежуточные
                     .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList());//терминальная
 
             if (keysToRemove.isEmpty()) {
                 return Response.success("Не найдено элементов с мощностью " + power + ".");

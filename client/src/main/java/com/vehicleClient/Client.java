@@ -185,9 +185,16 @@ public class Client {
             String[] parts = input.split(" ", 2);
             String command = parts[0];
             String argument = parts.length > 1 ? parts[1] : null;
-            lastArgument = argument; // сохраняем аргумент
-            Request request = new Request(command, argument);
+
+            // проверка на запрещенную команду
+            if ("save".equalsIgnoreCase(command)) {
+                System.out.println("нет доступа, используй серверную консоль, бебебе!");
+                return;
+            }
+
+            lastArgument = argument;
             lastCommand = command;
+            Request request = new Request(command, argument);
             try {
                 SelectionKey key = socketChannel.keyFor(selector);
                 key.attach(request);

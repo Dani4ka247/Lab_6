@@ -10,7 +10,7 @@ import java.io.IOException;
 public class IdManager {
 
     private static final String filePath = "id.txt";
-    private static long currentId = 0;
+    private static long currentId = 1;
 
     public static void loadIdFromFile() throws IOException {
         File file = new File(filePath);
@@ -21,7 +21,7 @@ public class IdManager {
             if (line != null) {
                 currentId = Long.parseLong(line);
             } else {
-                currentId = 0;
+                currentId = 1;
             }
         } else {
             file.createNewFile();

@@ -1,9 +1,11 @@
-package com.vehicleServer.serveNetwork;
+package com.vehicleServer.serverNetwork;
 
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 import com.vehicleServer.managers.CommandManager;
 import com.vehicleShared.managers.CollectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -12,8 +14,10 @@ import java.nio.channels.*;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Scanner;
 
 public class Server {
+    private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private final int port;
     private CollectionManager collectionManager;
     private final Map<SelectionKey, ByteArrayOutputStream> clientBuffers = new HashMap<>();
@@ -26,22 +30,34 @@ public class Server {
 
     private void initializeManagers() {
         collectionManager = new CollectionManager();
-        CommandManager.initialize(collectionManager);
+        CommandManager.initialize(collectionManager, logger);
         CommandManager.executeRequest(new Request("load", null));
     }
 
     public void start() {
-        System.out.println("сервер инициализирован. запуск...");
+        logger.info("сервер инициализирован. запуск...");
+
+        // запуск потока для консольного ввода
+        Thread consoleThread = new Thread(this::handleConsoleInput);
+        consoleThread.setDaemon(true);
+        consoleThread.start();
 
         try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
             serverChannel.bind(new InetSocketAddress(port));
             serverChannel.configureBlocking(false);
-
+            File logDir = new File("logs");
+            if (!logDir.exists()) {
+                boolean created = logDir.mkdirs();
+                if (created) {
+                    logger.info("Создана папка для логов: {}", logDir.getAbsolutePath());
+                } else {
+                    logger.warn("Не удалось создать папку для логов");
+                }
+            }
             Selector selector = Selector.open();
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            System.out.println("сервер запущен и ожидает подключения на порту " + port);
-
+            logger.info("сервер запущен и ожидает подключения на порту {}", port);
             while (true) {
                 selector.select();
                 Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -55,14 +71,45 @@ public class Server {
                     if (key.isAcceptable()) {
                         acceptClient(serverChannel, selector);
                     } else if (key.isReadable()) {
-                        processClient(key);
+                        processClient(key, selector);
                     } else if (key.isWritable()) {
                         sendPendingResponse(key);
                     }
                 }
             }
         } catch (IOException e) {
-            System.err.println("ошибка при запуске сервера: " + e.getMessage());
+            logger.error("ошибка при запуске сервера: {}", e.getMessage());
+        }
+    }
+
+    private void handleConsoleInput() {
+        Scanner scanner = new Scanner(System.in);
+        logger.info("консоль сервера готова. доступные команды: save, shutdown, exit, info, show");
+
+        while (true) {
+            System.out.print("сервер> ");
+            if (scanner.hasNextLine()) {
+                String input = scanner.nextLine().trim();
+                if (input.isEmpty()) {
+                    System.out.println("введите команду (save, shutdown, exit, info, show)");
+                    continue;
+                }
+
+                String[] parts = input.split(" ", 2);
+                String command = parts[0];
+                String argument = parts.length > 1 ? parts[1] : null;
+
+                if ("exit".equalsIgnoreCase(command)) {
+                    logger.info("сервер завершает работу через консоль");
+                    System.exit(0);
+                }
+
+                Response response = CommandManager.executeRequest(new Request(command,argument));
+                System.out.println("результат: " + response.getMessage());
+                if (response.getException() != null) {
+                    System.out.println("ошибка: " + response.getException().getMessage());
+                }
+            }
         }
     }
 
@@ -72,10 +119,10 @@ public class Server {
         SelectionKey key = clientChannel.register(selector, SelectionKey.OP_READ);
         clientBuffers.put(key, new ByteArrayOutputStream());
         expectedLengths.put(key, -1);
-        System.out.println("клиент подключился: " + clientChannel.getRemoteAddress());
+        logger.info("клиент подключился: {}", clientChannel.getRemoteAddress());
     }
 
-    private void processClient(SelectionKey key) {
+    private void processClient(SelectionKey key, Selector selector) {
         SocketChannel clientChannel = (SocketChannel) key.channel();
         try {
             ByteBuffer buffer = ByteBuffer.allocate(4096);
@@ -85,7 +132,7 @@ public class Server {
                 clientChannel.close();
                 clientBuffers.remove(key);
                 expectedLengths.remove(key);
-                System.out.println("клиент отключился");
+                logger.info("клиент отключился: {}", clientChannel.getRemoteAddress());
                 return;
             }
 
@@ -105,9 +152,15 @@ public class Server {
 
             if (expectedLength != -1 && clientBuffer.size() >= expectedLength) {
                 Request request = deserialize(clientBuffer.toByteArray());
-                System.out.println("получен запрос: " + request);
+                logger.info("получен запрос: {}", request);
 
                 Response response = CommandManager.executeRequest(request);
+                if (request.getCommand().equals("shutdown")) {
+                    notifyAllClients(selector, response);
+                    logger.info("сервер завершает работу");
+                    System.exit(0);
+                }
+
                 key.attach(response);
                 key.interestOps(SelectionKey.OP_WRITE);
 
@@ -115,12 +168,32 @@ public class Server {
                 expectedLengths.put(key, -1);
             }
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("ошибка при обработке клиента: " + e.getMessage());
+            logger.error("ошибка при обработке клиента");
             try {
                 clientChannel.close();
                 clientBuffers.remove(key);
                 expectedLengths.remove(key);
             } catch (IOException ignored) {}
+        }
+    }
+
+    private void notifyAllClients(Selector selector, Response exitResponse) {
+        for (SelectionKey key : selector.keys()) {
+            if (key.isValid() && key.channel() instanceof SocketChannel) {
+                SocketChannel clientChannel = (SocketChannel) key.channel();
+                try {
+                    byte[] data = serialize(exitResponse);
+                    ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
+                    lengthBuffer.putInt(data.length);
+                    lengthBuffer.flip();
+                    clientChannel.write(lengthBuffer);
+                    ByteBuffer dataBuffer = ByteBuffer.wrap(data);
+                    clientChannel.write(dataBuffer);
+                    logger.info("уведомление отправлено клиенту");
+                } catch (IOException e) {
+                    logger.error("ошибка отправки уведомления клиенту");
+                }
+            }
         }
     }
 
@@ -136,11 +209,12 @@ public class Server {
             clientChannel.write(lengthBuffer);
             ByteBuffer dataBuffer = ByteBuffer.wrap(data);
             clientChannel.write(dataBuffer);
+            logger.info("отправлен ответ клиенту {}: {}", clientChannel.getRemoteAddress(), response);
             key.attach(null);
             key.interestOps(SelectionKey.OP_READ);
         } catch (IOException e) {
-            System.err.println("ошибка при отправке ответа: " + e.getMessage());
             try {
+                logger.error("ошибка при отправке ответа клиенту {}: {}", clientChannel.getRemoteAddress(), e.getMessage());
                 clientChannel.close();
                 clientBuffers.remove(key);
                 expectedLengths.remove(key);

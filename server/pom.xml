@@ -27,11 +27,18 @@
             <version>4.1.77.Final</version>
         </dependency>
 
-        <!-- Логирование -->
+        <!-- API SLF4J -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version>
+        </dependency>
+
+        <!-- Реализация SLF4J через Logback -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.13</version>
+            <version>1.4.11</version>
         </dependency>
     </dependencies>
 
@@ -45,7 +52,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.vehicleShared.server.ServerMain</mainClass>
+                            <mainClass>com.vehicleServer.ServerMain</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
