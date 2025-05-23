@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="client:jar" />
+      <artifact name="server:jar" />
+    </artifacts-to-build>
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="доделаны основные коменды кроме команд связанных с файлом">
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ExecuteFileCommand.java" afterDir="false" />
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Refactor logging system and enhance server functionality&#10;&#10;Replaced `System.out` with SLF4J-based logging across server components for improved logging consistency. Integrated the ability to handle console inputs and added proper shutdown mechanisms for clients and the server. Improved dependency management in `pom.xml` files and fixed minor issues such as package name mismatches to ensure seamless execution.">
+      <change afterPath="$PROJECT_DIR$/.idea/artifacts/client_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/artifacts/server_jar.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/src/main/resources/logback.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/shared/src/main/resources/META-INF/MANIFEST.MF" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/HelpCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/HelpCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/LoadCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/LoadCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/FileManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/FileManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveByPower.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveByPower.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/model/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/model/Vehicle.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,24 +60,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.ClientMain.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Main (1).executor&quot;: &quot;Run&quot;,
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;Application.ServerMain.executor&quot;: &quot;Run&quot;,
-    &quot;Application.com.vehicleServer.ServerMain.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/mac/IdeaProjects/VehicleSystem/server/src/main/java/com/vehicle&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;settings.qodana&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.ClientMain.executor": "Run",
+    "Application.Main (1).executor": "Run",
+    "Application.Main.executor": "Run",
+    "Application.ServerMain.executor": "Run",
+    "Application.com.vehicleServer.ServerMain.executor": "Run",
+    "JAR Application.VehicleSystem.jar (1).executor": "Run",
+    "JAR Application.VehicleSystem.jar (2).executor": "Run",
+    "JAR Application.VehicleSystem.jar (3).executor": "Run",
+    "JAR Application.VehicleSystem.jar.executor": "Run",
+    "JAR Application.client-1.0-SNAPSHOT.jar.executor": "Run",
+    "JAR Application.original-client-1.0-SNAPSHOT.jar.executor": "Run",
+    "JAR Application.server-1.0-SNAPSHOT-jar-with-dependencies.jar.executor": "Run",
+    "JAR Application.server-1.0-SNAPSHOT.jar.executor": "Run",
+    "JAR Application.shared-1.0-SNAPSHOT.jar.executor": "Run",
+    "Maven.client [package].executor": "Run",
+    "Maven.parent [clean].executor": "Run",
+    "Maven.parent [package].executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/mac/IdeaProjects/VehicleSystem/server/src/main/java/com/vehicle",
+    "project.structure.last.edited": "Artifacts",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "MavenSettings"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/server/src/main/java/com/vehicle" />
@@ -79,21 +97,8 @@
       <recent name="$PROJECT_DIR$/shared/src/main/java" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.ClientMain">
-    <configuration name="ClientMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.vehicleClient.ClientMain" />
-      <module name="client" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.vehicleClient.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="com.vehicleServer.ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="JAR Application.client-1.0-SNAPSHOT.jar">
+    <configuration name="ServerMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.vehicleServer.ServerMain" />
       <module name="server" />
       <extension name="coverage">
@@ -106,10 +111,29 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="client-1.0-SNAPSHOT.jar" type="JarApplication" temporary="true">
+      <option name="JAR_PATH" value="$PROJECT_DIR$/client/target/client-1.0-SNAPSHOT.jar" />
+      <method v="2" />
+    </configuration>
+    <configuration name="original-client-1.0-SNAPSHOT.jar" type="JarApplication" temporary="true">
+      <option name="JAR_PATH" value="$PROJECT_DIR$/client/target/original-client-1.0-SNAPSHOT.jar" />
+      <method v="2" />
+    </configuration>
+    <configuration name="server-1.0-SNAPSHOT-jar-with-dependencies.jar" type="JarApplication" temporary="true">
+      <option name="JAR_PATH" value="$PROJECT_DIR$/server/target/server-1.0-SNAPSHOT-jar-with-dependencies.jar" />
+      <method v="2" />
+    </configuration>
+    <configuration name="server-1.0-SNAPSHOT.jar" type="JarApplication" temporary="true">
+      <option name="JAR_PATH" value="$PROJECT_DIR$/server/target/server-1.0-SNAPSHOT.jar" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.ClientMain" />
-        <item itemvalue="Application.com.vehicleServer.ServerMain" />
+        <item itemvalue="JAR Application.client-1.0-SNAPSHOT.jar" />
+        <item itemvalue="JAR Application.server-1.0-SNAPSHOT-jar-with-dependencies.jar" />
+        <item itemvalue="JAR Application.server-1.0-SNAPSHOT.jar" />
+        <item itemvalue="Application.ServerMain" />
+        <item itemvalue="JAR Application.original-client-1.0-SNAPSHOT.jar" />
       </list>
     </recent_temporary>
   </component>
@@ -194,7 +218,23 @@
       <option name="project" value="LOCAL" />
       <updated>1746993231418</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="готово исполнение файла">
+      <option name="closed" value="true" />
+      <created>1746999249908</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1746999249908</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Refactor logging system and enhance server functionality&#10;&#10;Replaced `System.out` with SLF4J-based logging across server components for improved logging consistency. Integrated the ability to handle console inputs and added proper shutdown mechanisms for clients and the server. Improved dependency management in `pom.xml` files and fixed minor issues such as package name mismatches to ensure seamless execution.">
+      <option name="closed" value="true" />
+      <created>1747464061345</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1747464061345</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -207,6 +247,8 @@
     <MESSAGE value="изменена иерархия" />
     <MESSAGE value="исправлены ошибки импортов" />
     <MESSAGE value="доделаны основные коменды кроме команд связанных с файлом" />
-    <option name="LAST_COMMIT_MESSAGE" value="доделаны основные коменды кроме команд связанных с файлом" />
+    <MESSAGE value="готово исполнение файла" />
+    <MESSAGE value="Refactor logging system and enhance server functionality&#10;&#10;Replaced `System.out` with SLF4J-based logging across server components for improved logging consistency. Integrated the ability to handle console inputs and added proper shutdown mechanisms for clients and the server. Improved dependency management in `pom.xml` files and fixed minor issues such as package name mismatches to ensure seamless execution." />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor logging system and enhance server functionality&#10;&#10;Replaced `System.out` with SLF4J-based logging across server components for improved logging consistency. Integrated the ability to handle console inputs and added proper shutdown mechanisms for clients and the server. Improved dependency management in `pom.xml` files and fixed minor issues such as package name mismatches to ensure seamless execution." />
   </component>
 </project>

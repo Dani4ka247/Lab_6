@@ -30,6 +30,11 @@ public class RemoveByPower implements Command {
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());//терминальная
 
+            collectionManager.entrySet()
+                    .stream()//источник
+                    .filter(entry -> entry.getValue().getPower() == power)//промежуточные
+                    .map(Map.Entry::getKey).peek(System.out::println);
+
             if (keysToRemove.isEmpty()) {
                 return Response.success("Не найдено элементов с мощностью " + power + ".");
             }
@@ -47,3 +52,4 @@ public class RemoveByPower implements Command {
         return "Удаляет из коллекции все элементы, у которых enginePower равен заданному значению.";
     }
 }
+

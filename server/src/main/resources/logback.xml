@@ -1,0 +1,13 @@
+<configuration>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>logs/server.log</file> <!-- Путь к файлу логов -->
+        <append>true</append> <!-- Логи добавляются в файл, а не перезаписываются -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="debug"> <!-- Укажите минимальный уровень логирования -->
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>

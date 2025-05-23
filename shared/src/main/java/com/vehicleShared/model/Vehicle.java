@@ -80,4 +80,3 @@ public class Vehicle implements Serializable,Comparable<Vehicle> {
     }
 }
 
-
