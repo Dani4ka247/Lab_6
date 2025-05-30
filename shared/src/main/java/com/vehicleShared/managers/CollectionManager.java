@@ -23,7 +23,8 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
             db = DriverManager.getConnection(url, user, password);
             return true;
         } catch (SQLException e) {
-            System.err.println("ошибка подключения к бд: " + e.getMessage());
+            //System.err.println("ошибка подключения к бд: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -35,7 +36,7 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         ResultSet rs = stmt.executeQuery();
         if (rs.next()) {
             String storedPassword = rs.getString("password");
-            return storedPassword.equals(md5(password)); // исправлено
+            return storedPassword.equals(md5(password));
         }
         return false;
     }
@@ -49,7 +50,10 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
             stmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-            return false;
+            if (e.getSQLState().equals("23505")) {
+                return false;
+            }
+            throw e;
         }
     }
 
@@ -70,7 +74,7 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
             if (ts != null) {
                 vehicle.setCreationDate(ts.toLocalDateTime().atZone(ZonedDateTime.now().getZone()));
             }
-            put(rs.getLong("id"), vehicle); // исправлено
+            put(rs.getLong("id"), vehicle);
         }
     }
 

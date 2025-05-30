@@ -23,7 +23,7 @@ public class Client {
     private ByteArrayOutputStream buffer;
     private boolean isRunning = true;
     private Scanner scanner;
-    private Integer expectedLength = -1;
+    private int expectedLength = -1;
     private boolean waitingForResponse = false;
     private String lastArgument = null;
     private String lastCommand = null;
@@ -89,85 +89,84 @@ public class Client {
         if (channel.finishConnect()) {
             System.out.println("успешно подключен к серверу");
             key.interestOps(SelectionKey.OP_READ);
+            key.attach(buffer);
         }
     }
 
     private void read(SelectionKey key) {
         SocketChannel channel = (SocketChannel) key.channel();
         ByteArrayOutputStream clientBuffer = (ByteArrayOutputStream) key.attachment();
-        if (clientBuffer == null) {
-            clientBuffer = new ByteArrayOutputStream();
-            key.attach(clientBuffer);
-        }
 
-        try {
-            ByteBuffer byteBuffer = ByteBuffer.allocate(4096);
-            int bytesRead = channel.read(byteBuffer);
+        synchronized (clientBuffer) {
+            try {
+                ByteBuffer byteBuffer = ByteBuffer.allocate(4096);
+                int bytesRead = channel.read(byteBuffer);
 
-            if (bytesRead == -1) {
-                System.out.println("сервер закрыл соединение");
+                if (bytesRead == -1) {
+                    System.out.println("сервер закрыл соединение");
+                    reconnect();
+                    return;
+                }
+
+                byteBuffer.flip();
+                byte[] readData = new byte[byteBuffer.remaining()];
+                byteBuffer.get(readData);
+                clientBuffer.write(readData);
+                System.out.println("прочитано байт: " + readData.length);
+
+                byte[] data = clientBuffer.toByteArray();
+                if (expectedLength == -1 && data.length >= 4) {
+                    ByteBuffer lengthBuffer = ByteBuffer.wrap(data, 0, 4);
+                    expectedLength = lengthBuffer.getInt();
+                    System.out.println("ожидаемая длина: " + expectedLength);
+                    clientBuffer.reset();
+                    clientBuffer.write(data, 4, data.length - 4);
+                }
+
+                if (expectedLength != -1 && clientBuffer.size() >= expectedLength) {
+                    byte[] responseData = new byte[expectedLength];
+                    System.arraycopy(clientBuffer.toByteArray(), 0, responseData, 0, expectedLength);
+                    System.out.println("десериализация ответа, длина: " + responseData.length);
+                    Response response = deserialize(responseData);
+                    System.out.println("ответ сервера: " + response.getMessage());
+
+                    if (response.hasData()) {
+                        System.out.println("данные: " + response.getData());
+                    }
+
+                    if (response.getException() != null) {
+                        System.out.println("ошибка на сервере: " + response.getException().getMessage());
+                    }
+
+                    if (response.isSuccess() && (response.getMessage().contains("авторизация успешна") || response.getMessage().contains("регистрация успешна"))) {
+                        authenticated = true;
+                        System.out.println("авторизация прошла успешно, вводите команды!");
+                    }
+
+                    if (response.requiresVehicle()) {
+                        System.out.println("для выполнения команды нужен объект vehicle");
+                        Vehicle vehicle = CollectionManager.requestVehicleInformation(scanner, IdManager.getUnicId());
+                        Request vehicleRequest = new Request(lastCommand, lastArgument, login, password);
+                        vehicleRequest.setVehicle(vehicle);
+                        key.attach(vehicleRequest);
+                        key.interestOps(SelectionKey.OP_WRITE);
+                        waitingForResponse = true;
+                    } else {
+                        key.attach(clientBuffer);
+                        key.interestOps(SelectionKey.OP_READ);
+                        waitingForResponse = false;
+                        lastArgument = null;
+                        lastCommand = null;
+                    }
+                    clientBuffer.reset();
+                    expectedLength = -1;
+                }
+                key.interestOps(SelectionKey.OP_READ);
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("ошибка при чтении: " + e.getMessage());
+                e.printStackTrace();
                 reconnect();
-                return;
             }
-
-            byteBuffer.flip();
-            byte[] readData = new byte[byteBuffer.remaining()];
-            byteBuffer.get(readData);
-            clientBuffer.write(readData);
-            System.out.println("прочитано байт: " + readData.length);
-
-            byte[] data = clientBuffer.toByteArray();
-            if (expectedLength == -1 && data.length >= 4) {
-                ByteBuffer lengthBuffer = ByteBuffer.wrap(data, 0, 4);
-                expectedLength = lengthBuffer.getInt();
-                System.out.println("ожидаемая длина: " + expectedLength);
-                clientBuffer.reset();
-                clientBuffer.write(data, 4, data.length - 4);
-            }
-
-            if (expectedLength != -1 && clientBuffer.size() >= expectedLength) {
-                byte[] responseData = new byte[expectedLength];
-                System.arraycopy(clientBuffer.toByteArray(), 0, responseData, 0, expectedLength);
-                System.out.println("десериализация ответа, длина: " + responseData.length);
-                Response response = deserialize(responseData);
-                System.out.println("ответ сервера: " + response.getMessage());
-
-                if (response.hasData()) {
-                    System.out.println("данные: " + response.getData());
-                }
-
-                if (response.getException() != null) {
-                    System.out.println("ошибка на сервере: " + response.getException().getMessage());
-                }
-
-                if (response.isSuccess() && (response.getMessage().contains("авторизация успешна") || response.getMessage().contains("регистрация успешна"))) {
-                    authenticated = true;
-                    System.out.println("авторизация прошла успешно, вводите команды!");
-                }
-
-                if (response.requiresVehicle()) {
-                    System.out.println("для выполнения команды нужен объект vehicle");
-                    Vehicle vehicle = CollectionManager.requestVehicleInformation(scanner, IdManager.getUnicId());
-                    Request vehicleRequest = new Request(lastCommand, lastArgument, login, password);
-                    vehicleRequest.setVehicle(vehicle);
-                    key.attach(vehicleRequest);
-                    key.interestOps(SelectionKey.OP_WRITE);
-                    waitingForResponse = true;
-                } else {
-                    key.attach(null);
-                    key.interestOps(SelectionKey.OP_READ);
-                    waitingForResponse = false;
-                    lastArgument = null;
-                    lastCommand = null;
-                }
-                clientBuffer.reset();
-                expectedLength = -1;
-            }
-            key.interestOps(SelectionKey.OP_READ);
-        } catch (IOException | ClassNotFoundException e) {
-            System.err.println("ошибка при чтении: " + e.getMessage());
-            e.printStackTrace();
-            reconnect();
         }
     }
 
@@ -179,6 +178,8 @@ public class Client {
             socketChannel.connect(new InetSocketAddress(host, port));
             socketChannel.register(selector, SelectionKey.OP_CONNECT);
             System.out.println("попытка переподключения...");
+            buffer.reset();
+            expectedLength = -1;
         } catch (IOException e) {
             System.err.println("не удалось переподключиться: " + e.getMessage());
             isRunning = false;
@@ -195,17 +196,18 @@ public class Client {
         ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
         lengthBuffer.putInt(data.length);
         lengthBuffer.flip();
-        while (lengthBuffer.hasRemaining()) {
-            channel.write(lengthBuffer);
-        }
-
-        ByteBuffer dataBuffer = ByteBuffer.wrap(data);
-        while (dataBuffer.hasRemaining()) {
-            channel.write(dataBuffer);
+        synchronized (channel) {
+            while (lengthBuffer.hasRemaining()) {
+                channel.write(lengthBuffer);
+            }
+            ByteBuffer dataBuffer = ByteBuffer.wrap(data);
+            while (dataBuffer.hasRemaining()) {
+                channel.write(dataBuffer);
+            }
         }
 
         key.interestOps(SelectionKey.OP_READ);
-        key.attach(null);
+        key.attach(buffer);
         waitingForResponse = true;
     }
 
@@ -227,6 +229,7 @@ public class Client {
                 SelectionKey key = socketChannel.keyFor(selector);
                 key.attach(request);
                 key.interestOps(SelectionKey.OP_WRITE);
+                selector.wakeup();
             } catch (Exception e) {
                 System.err.println("ошибка при отправке запроса: " + e.getMessage());
             }
@@ -266,6 +269,7 @@ public class Client {
                 SelectionKey key = socketChannel.keyFor(selector);
                 key.attach(request);
                 key.interestOps(SelectionKey.OP_WRITE);
+                selector.wakeup();
             } catch (Exception e) {
                 System.err.println("ошибка при отправке запроса: " + e.getMessage());
             }

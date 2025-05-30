@@ -47,7 +47,7 @@ public class CommandManager {
         }
         if (!commandName.equals("register") && !commandName.equals("help") && !request.getLogin().equals("console")) {
             try {
-                if (!collectionManager.registerUser(request.getLogin(), md5(request.getPassword()))) {
+                if (!collectionManager.authenticateUser(request.getLogin(), request.getPassword())) {
                     return Response.error("неверный логин или пароль");
                 }
             } catch (Exception e) {

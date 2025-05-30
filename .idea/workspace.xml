@@ -10,32 +10,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Refactor logging and add build artifacts configuration&#10;&#10;Introduced `logback.xml` for structured server-side logging and replaced `System.out` with SLF4J for improved logging consistency. Added IntelliJ IDEA artifact configurations for building client and server JARs. Updated workspace settings and metadata for streamlined project management.">
-      <change afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RegisterCommand.java" afterDir="false" />
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Lab7 start~">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/main/java/com/vehicleClient/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicleClient/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/server/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ExecuteFileCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ExecuteFileCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ExitCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ExitCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InfoCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InfoCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/LoadCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveByPower.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveByPower.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveGreaterKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveGreaterKey.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveKeyCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveKeyCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ReplaceIfLowerCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ReplaceIfLowerCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/SaveCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/UpdateCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/UpdateCommand.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/FileManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/FileManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/serverNetwork/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/serverNetwork/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/shared/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/CollectionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/CollectionManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/model/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/model/Vehicle.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/network/Request.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/network/Request.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/network/Response.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/network/Response.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -166,9 +146,9 @@
     <recent_temporary>
       <list>
         <item itemvalue="Application.ServerMain" />
+        <item itemvalue="JAR Application.client-1.0-SNAPSHOT.jar" />
         <item itemvalue="Application.ClientMain" />
         <item itemvalue="JAR Application.server-1.0-SNAPSHOT.jar" />
-        <item itemvalue="JAR Application.client-1.0-SNAPSHOT.jar" />
         <item itemvalue="JAR Application.original-client-1.0-SNAPSHOT.jar" />
       </list>
     </recent_temporary>
@@ -278,7 +258,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748032240042</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Lab7 start~">
+      <option name="closed" value="true" />
+      <created>1748607181721</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1748607181721</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -294,6 +282,7 @@
     <MESSAGE value="готово исполнение файла" />
     <MESSAGE value="Refactor logging system and enhance server functionality&#10;&#10;Replaced `System.out` with SLF4J-based logging across server components for improved logging consistency. Integrated the ability to handle console inputs and added proper shutdown mechanisms for clients and the server. Improved dependency management in `pom.xml` files and fixed minor issues such as package name mismatches to ensure seamless execution." />
     <MESSAGE value="Refactor logging and add build artifacts configuration&#10;&#10;Introduced `logback.xml` for structured server-side logging and replaced `System.out` with SLF4J for improved logging consistency. Added IntelliJ IDEA artifact configurations for building client and server JARs. Updated workspace settings and metadata for streamlined project management." />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactor logging and add build artifacts configuration&#10;&#10;Introduced `logback.xml` for structured server-side logging and replaced `System.out` with SLF4J for improved logging consistency. Added IntelliJ IDEA artifact configurations for building client and server JARs. Updated workspace settings and metadata for streamlined project management." />
+    <MESSAGE value="Lab7 start~" />
+    <option name="LAST_COMMIT_MESSAGE" value="Lab7 start~" />
   </component>
 </project>
