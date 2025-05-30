@@ -1,8 +1,9 @@
 package com.vehicleServer.commands;
 
+import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
-import com.vehicleShared.managers.CollectionManager;
+import java.util.stream.Collectors;
 
 public class ShowCommand implements Command {
     private final CollectionManager collectionManager;
@@ -13,10 +14,14 @@ public class ShowCommand implements Command {
 
     @Override
     public Response execute(Request request) {
-        if (collectionManager.isEmpty()) {return Response.success("коллекция пуста");}
-        return Response.success(collectionManager.getSortedVehiclesByPower());
+        String result = collectionManager.isEmpty()
+                ? "коллекция пуста"
+                : collectionManager.entrySet()
+                .stream()
+                .map(entry -> entry.getKey() + " : " + entry.getValue().toString())
+                .collect(Collectors.joining("\n"));
+        return Response.success(result);
     }
-
     @Override
     public String getDescription() {
         return "Отображает все элементы коллекции в порядке возрастания мощности.";

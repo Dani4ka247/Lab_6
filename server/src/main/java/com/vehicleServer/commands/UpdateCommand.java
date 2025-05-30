@@ -1,11 +1,9 @@
 package com.vehicleServer.commands;
 
-import com.vehicleShared.network.Request;
-import com.vehicleShared.network.Response;
 import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.model.Vehicle;
-
-import java.util.Map;
+import com.vehicleShared.network.Request;
+import com.vehicleShared.network.Response;
 
 public class UpdateCommand implements Command {
     private final CollectionManager collectionManager;
@@ -18,37 +16,30 @@ public class UpdateCommand implements Command {
     public Response execute(Request request) {
         String argument = request.getArgument();
         if (argument == null || argument.isEmpty()) {
-            return Response.error("Ошибка: команда 'update' требует указания id.");
+            return Response.error("нужен id");
         }
-
+        Vehicle vehicle = request.getVehicle();
+        if (vehicle == null) {
+            return Response.success("нужен объект vehicle", true);
+        }
         try {
-            int id = Integer.parseInt(argument);
-            // ищем ключ элемента с заданным id
-            Integer key = collectionManager.entrySet()
-                    .stream()
-                    .filter(entry -> entry.getValue().getId() == id)
-                    .map(Map.Entry::getKey)
-                    .findFirst()
-                    .orElse(null);
-
-
-
-            if (key == null) {
-                return Response.error("Ошибка: элемент с id " + id + " не найден.");
+            long id = Long.parseLong(argument);
+            if (!collectionManager.containsKey(id)) {
+                return Response.error("vehicle с id " + id + " не найден");
             }
-
-            Vehicle newVehicle = request.getVehicle();
-            if (newVehicle == null) {
-                return new Response(true, "Серверу требуется объект Vehicle для обновления элемента с id " + id + ".", true);
+            if (!collectionManager.canModify(id, request.getLogin())) {
+                return Response.error("это не твой vehicle");
             }
-
-            collectionManager.replace(key, new Vehicle(Long.parseLong(argument),newVehicle));
-            return Response.success("Элемент с id " + id + " успешно обновлен.");
+            if (collectionManager.updateVehicle(id, vehicle, request.getLogin())) {
+                return Response.success("vehicle обновлён");
+            }
+            return Response.error("ошибка обновления");
         } catch (NumberFormatException e) {
-            return Response.error("Ошибка: id должен быть целым числом.");
+            return Response.error("id должен быть числом");
+        } catch (Exception e) {
+            return Response.error("ошибка: " + e.getMessage());
         }
     }
-
     @Override
     public String getDescription() {
         return "Обновляет элемент коллекции с указанным id.";

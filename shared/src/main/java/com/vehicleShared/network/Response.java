@@ -3,19 +3,14 @@ package com.vehicleShared.network;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Класс для передачи ответов от сервера клиенту
- */
 public class Response implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    private final boolean success;        // Статус успеха выполнения
-    private final String message;         // Сообщение от сервера
-    private final boolean requiresVehicle; // Требуется ли объект Vehicle
+    private final boolean success;
+    private final String message;
+    private final boolean requiresVehicle;
     private final List<Serializable> data;
     private final Exception exception;
 
-    // Конструкторы
     public Response(boolean success, String message, boolean requiresVehicle, List<Serializable> data, Exception exception) {
         this.success = success;
         this.message = message;
@@ -32,7 +27,6 @@ public class Response implements Serializable {
         this(success, message, false);
     }
 
-    // Геттеры
     public boolean isSuccess() {
         return success;
     }
@@ -59,16 +53,9 @@ public class Response implements Serializable {
 
     @Override
     public String toString() {
-        return "Response{" +
-                "success=" + success +
-                ", message='" + message + '\'' +
-                ", requiresVehicle=" + requiresVehicle +
-                ", dataSize=" + (data != null ? data.size() : 0) +
-                ", exception=" + (exception != null ? exception.getClass().getSimpleName() : "null") +
-                '}';
+        return "Response{success=" + success + ", message='" + message + "', requiresVehicle=" + requiresVehicle + ", dataSize=" + (data != null ? data.size() : 0) + ", exception=" + (exception != null ? exception.getClass().getSimpleName() : "null") + '}';
     }
 
-    // Фабричные методы
     public static Response success(String message) {
         return new Response(true, message, false);
     }

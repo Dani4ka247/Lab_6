@@ -3,7 +3,6 @@ package com.vehicleServer.commands;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 import com.vehicleShared.managers.CollectionManager;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,31 +17,46 @@ public class RemoveGreaterKey implements Command {
     public Response execute(Request request) {
         String argument = request.getArgument();
         if (argument == null || argument.isEmpty()) {
-            return Response.error("Ошибка: команда 'remove_greater_key' требует указания ключа.");
+            return Response.error("нужен id");
         }
-
         try {
-            int keyThreshold = Integer.parseInt(argument);
-            List<Integer> keysToRemove = collectionManager.keySet()
+            long keyThreshold = Long.parseLong(argument);
+            List<Long> keysToRemove = collectionManager.keySet()
                     .stream()
                     .filter(key -> key > keyThreshold)
+                    .filter(key -> {
+                        try {
+                            return collectionManager.canModify(key, request.getLogin());
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
                     .collect(Collectors.toList());
 
             if (keysToRemove.isEmpty()) {
-                return Response.success("Не найдено элементов с ключом, превышающим " + keyThreshold + ".");
+                return Response.success("нет элементов с id больше " + keyThreshold);
             }
 
-            // удаляем элементы
-            keysToRemove.forEach(collectionManager::remove);
+            boolean allRemoved = true;
+            for (Long id : keysToRemove) {
+                if (!collectionManager.removeVehicle(id, request.getLogin())) {
+                    allRemoved = false;
+                }
+            }
+
             String removedKeys = String.join(", ", keysToRemove.stream().map(String::valueOf).collect(Collectors.toList()));
-            return Response.success("Удалены элементы с ключами, превышающими " + keyThreshold + ": " + removedKeys + ".");
+            return allRemoved
+                    ? Response.success("удалены элементы с id больше " + keyThreshold + ": " + removedKeys)
+                    : Response.error("не все элементы удалось удалить");
         } catch (NumberFormatException e) {
-            return Response.error("Ошибка: ключ должен быть целым числом.");
+            return Response.error("id должен быть числом");
+        } catch (Exception e) {
+            return Response.error("ошибка: " + e.getMessage());
         }
     }
 
     @Override
     public String getDescription() {
-        return "Удаляет из коллекции все элементы, ключ которых превышает заданный.";
+        return "удаляет все элементы с id больше заданного, принадлежащие пользователю";
     }
 }

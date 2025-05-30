@@ -78,5 +78,34 @@ public class Vehicle implements Serializable,Comparable<Vehicle> {
     public long getId() {
         return id;
     }
+
+    public String getName()
+    {
+        return name;
+    }
+
+    public Coordinates getCoordinates() {
+        return coordinates;
+    }
+
+    public ZonedDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public VehicleType getType() {
+        return type;
+    }
+
+    public FuelType getFuelType() {
+        return fuelType;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setCreationDate(ZonedDateTime creationDate){
+        this.creationDate = creationDate;
+    }
 }
 

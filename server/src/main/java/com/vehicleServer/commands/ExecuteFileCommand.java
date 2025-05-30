@@ -3,10 +3,9 @@ package com.vehicleServer.commands;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 import com.vehicleShared.managers.CollectionManager;
-import com.vehicleServer.managers.CommandManager;
 import com.vehicleServer.managers.FileManager;
-
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExecuteFileCommand implements Command {
     private final CollectionManager collectionManager;
@@ -18,20 +17,20 @@ public class ExecuteFileCommand implements Command {
     @Override
     public Response execute(Request request) {
         String filePath = request.getArgument();
-        if (filePath == null || filePath.isEmpty()) {
-            return Response.error("Ошибка: команда 'execute_script' требует указания пути к файлу.");
+        if (filePath == null || filePath.trim().isEmpty()) {
+            return Response.error("нужен путь к файлу");
         }
-
-        List<Response> responses = FileManager.executeScript(filePath, collectionManager);
-        StringBuilder result = new StringBuilder("Результат выполнения скрипта " + filePath + ":\n");
-        for (Response response : responses) {
-            result.append(response.getMessage()).append("\n");
-        }
-        return Response.success(result.toString());
+        List<Response> responses = FileManager.executeScript(filePath, request.getLogin(), request.getPassword(), collectionManager);
+        String result = responses.stream()
+                .map(Response::getMessage)
+                .collect(Collectors.joining("\n"));
+        return responses.stream().allMatch(Response::isSuccess)
+                ? Response.success(result)
+                : Response.error(result);
     }
 
     @Override
     public String getDescription() {
-        return "Считывает и выполняет скрипт из указанного файла.";
+        return "выполняет команды из указанного файла";
     }
 }

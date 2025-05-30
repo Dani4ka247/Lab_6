@@ -1,10 +1,9 @@
 package com.vehicleServer.commands;
 
-import com.vehicleShared.managers.IdManager;
+import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.model.Vehicle;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
-import com.vehicleShared.managers.CollectionManager;
 
 public class InsertCommand implements Command {
     private final CollectionManager collectionManager;
@@ -15,20 +14,18 @@ public class InsertCommand implements Command {
 
     @Override
     public Response execute(Request request) {
-        String argument = request.getArgument();
-        if (argument == null || argument.isEmpty()) {
-            return Response.error("Ошибка: команда 'insert' требует указания ключа.");
-        }
-
         Vehicle vehicle = request.getVehicle();
         if (vehicle == null) {
-            return new Response(true,
-                    "Серверу требуется объект Vehicle для завершения команды.", true);
+            return Response.success("нужен объект vehicle", true);
         }
-
-        collectionManager.put(Integer.parseInt(argument), new Vehicle(IdManager.getUnicId(),vehicle));
-
-        return Response.success("Объект успешно добавлен в коллекцию.");
+        try {
+            if (collectionManager.addVehicle(vehicle, request.getLogin())) {
+                return Response.success("vehicle добавлен");
+            }
+            return Response.error("ошибка добавления");
+        } catch (Exception e) {
+            return Response.error("ошибка: " + e.getMessage());
+        }
     }
 
     @Override

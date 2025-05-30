@@ -17,10 +17,10 @@ public class FileManager {
     private static final int MAX_VEHICLE_LINES = 5; // name, coordinates, enginePower, vehicleType, fuelType
     private static final Set<String> VEHICLE_COMMANDS = Set.of("insert", "update", "replace_if_lower");
 
-    public static List<Response> executeScript(String filePath, CollectionManager collectionManager) {
+    public static List<Response> executeScript(String filePath, String login, String password, CollectionManager collectionManager) {
         List<Response> responses = new ArrayList<>();
         if (fileHistory.contains(filePath)) {
-            responses.add(Response.error("Ошибка: обнаружено рекурсивное выполнение файла " + filePath + "."));
+            responses.add(Response.error("рекурсия в файле " + filePath));
             return responses;
         }
 
@@ -44,20 +44,19 @@ public class FileManager {
                     }
                     Vehicle vehicle = parseVehicle(vehicleLines);
                     if (vehicle == null) {
-                        responses.add(Response.error("Ошибка: неверный формат данных Vehicle для команды "
-                                + commandName));
+                        responses.add(Response.error("неверный формат vehicle для команды " + commandName));
                         continue;
                     }
-                    Request request = new Request(commandName, argument);
+                    Request request = new Request(commandName, argument, login, password);
                     request.setVehicle(vehicle);
                     responses.add(CommandManager.executeRequest(request));
                 } else {
-                    Request request = new Request(commandName, argument);
+                    Request request = new Request(commandName, argument, login, password);
                     responses.add(CommandManager.executeRequest(request));
                 }
             }
         } catch (IOException e) {
-            responses.add(Response.error("Ошибка при чтении файла " + filePath + ": " + e.getMessage()));
+            responses.add(Response.error("ошибка чтения файла " + filePath + ": " + e.getMessage()));
         } finally {
             fileHistory.remove(filePath);
         }
@@ -65,20 +64,21 @@ public class FileManager {
     }
 
     private static Vehicle parseVehicle(List<String> lines) {
-        if (lines.size() < MAX_VEHICLE_LINES) {
+        if (lines.size() != MAX_VEHICLE_LINES) {
             return null;
         }
         try {
             String name = lines.get(0);
-            String[] coordParts = lines.get(1).split(",");
+            String[] coordParts = lines.get(1).split("\\(");
+            String[] parts = coordParts[1].split(",");
             Coordinates coordinates = new Coordinates(
-                    Float.parseFloat(coordParts[0].trim()),
-                    Integer.parseInt(coordParts[1].trim())
+                    Float.parseFloat(parts[0].trim()),
+                    Integer.parseInt(parts[1].trim().split("\\)")[0])
             );
             float enginePower = Float.parseFloat(lines.get(2));
-            VehicleType vehicleType = VehicleType.values()[Integer.parseInt(lines.get(3).trim()) - 1];
-            FuelType fuelType = FuelType.values()[Integer.parseInt(lines.get(4).trim()) - 1];
-            return new Vehicle(0, coordinates, name, enginePower, vehicleType, fuelType); // id игнорируется
+            VehicleType vehicleType = VehicleType.valueOf(lines.get(3).trim().toUpperCase());
+            FuelType fuelType = FuelType.valueOf(lines.get(4));
+            return new Vehicle(0, coordinates, name, enginePower, vehicleType, fuelType);
         } catch (Exception e) {
             return null;
         }

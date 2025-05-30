@@ -3,7 +3,6 @@ package com.vehicleServer.commands;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 import com.vehicleShared.managers.CollectionManager;
-
 import java.time.format.DateTimeFormatter;
 
 public class InfoCommand implements Command {
@@ -16,7 +15,7 @@ public class InfoCommand implements Command {
     @Override
     public Response execute(Request request) {
         String info = String.format(
-                "Тип коллекции: %s\nДата инициализации: %s\nКоличество элементов: %d",
+                "тип коллекции: %s\nдата инициализации: %s\nколичество элементов: %d",
                 collectionManager.getClass().getSimpleName(),
                 collectionManager.initializationDate.format(DateTimeFormatter.ofPattern("yyyy_MM_dd HH:mm")),
                 collectionManager.size()
@@ -26,6 +25,6 @@ public class InfoCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Выводит информацию о коллекции: тип, дату инициализации, количество элементов.";
+        return "выводит информацию о коллекции: тип, дату инициализации, количество элементов";
     }
 }

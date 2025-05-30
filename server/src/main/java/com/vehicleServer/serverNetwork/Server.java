@@ -11,17 +11,17 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Scanner;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class Server {
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private final int port;
     private CollectionManager collectionManager;
-    private final Map<SelectionKey, ByteArrayOutputStream> clientBuffers = new HashMap<>();
-    private final Map<SelectionKey, Integer> expectedLengths = new HashMap<>();
+    private final ExecutorService readerPool = Executors.newCachedThreadPool();
+    private final ExecutorService responderPool = Executors.newCachedThreadPool();
+    private final Map<SocketChannel, String> authenticatedUsers = new ConcurrentHashMap<>();
 
     public Server(int port) {
         this.port = port;
@@ -31,13 +31,10 @@ public class Server {
     private void initializeManagers() {
         collectionManager = new CollectionManager();
         CommandManager.initialize(collectionManager, logger);
-        CommandManager.executeRequest(new Request("load", null));
     }
 
     public void start() {
-        logger.info("сервер инициализирован. запуск...");
-
-        // запуск потока для консольного ввода
+        logger.info("сервер запускается на порту {}", port);
         Thread consoleThread = new Thread(this::handleConsoleInput);
         consoleThread.setDaemon(true);
         consoleThread.start();
@@ -45,19 +42,9 @@ public class Server {
         try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
             serverChannel.bind(new InetSocketAddress(port));
             serverChannel.configureBlocking(false);
-            File logDir = new File("logs");
-            if (!logDir.exists()) {
-                boolean created = logDir.mkdirs();
-                if (created) {
-                    logger.info("Создана папка для логов: {}", logDir.getAbsolutePath());
-                } else {
-                    logger.warn("Не удалось создать папку для логов");
-                }
-            }
             Selector selector = Selector.open();
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            logger.info("сервер запущен и ожидает подключения на порту {}", port);
             while (true) {
                 selector.select();
                 Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
@@ -71,40 +58,35 @@ public class Server {
                     if (key.isAcceptable()) {
                         acceptClient(serverChannel, selector);
                     } else if (key.isReadable()) {
-                        processClient(key, selector);
-                    } else if (key.isWritable()) {
-                        sendPendingResponse(key);
+                        readerPool.submit(() -> processClient(key, selector));
                     }
                 }
             }
         } catch (IOException e) {
-            logger.error("ошибка при запуске сервера: {}", e.getMessage());
+            logger.error("ошибка сервера: {}", e.getMessage());
         }
     }
 
     private void handleConsoleInput() {
         Scanner scanner = new Scanner(System.in);
-        logger.info("консоль сервера готова. доступные команды: save, shutdown, exit, info, show");
+        logger.info("консоль сервера готова. команды: info, show, exit");
 
         while (true) {
             System.out.print("сервер> ");
             if (scanner.hasNextLine()) {
                 String input = scanner.nextLine().trim();
-                if (input.isEmpty()) {
-                    System.out.println("введите команду (save, shutdown, exit, info, show)");
-                    continue;
-                }
+                if (input.isEmpty()) continue;
 
                 String[] parts = input.split(" ", 2);
                 String command = parts[0];
                 String argument = parts.length > 1 ? parts[1] : null;
 
                 if ("exit".equalsIgnoreCase(command)) {
-                    logger.info("сервер завершает работу через консоль");
+                    logger.info("сервер завершает работу");
                     System.exit(0);
                 }
 
-                Response response = CommandManager.executeRequest(new Request(command,argument));
+                Response response = CommandManager.executeRequest(new Request(command, argument, "console", "none"));
                 System.out.println("результат: " + response.getMessage());
                 if (response.getException() != null) {
                     System.out.println("ошибка: " + response.getException().getMessage());
@@ -116,63 +98,113 @@ public class Server {
     private void acceptClient(ServerSocketChannel serverChannel, Selector selector) throws IOException {
         SocketChannel clientChannel = serverChannel.accept();
         clientChannel.configureBlocking(false);
-        SelectionKey key = clientChannel.register(selector, SelectionKey.OP_READ);
-        clientBuffers.put(key, new ByteArrayOutputStream());
-        expectedLengths.put(key, -1);
+        clientChannel.register(selector, SelectionKey.OP_READ);
         logger.info("клиент подключился: {}", clientChannel.getRemoteAddress());
     }
 
     private void processClient(SelectionKey key, Selector selector) {
         SocketChannel clientChannel = (SocketChannel) key.channel();
+        ByteArrayOutputStream clientBuffer = (ByteArrayOutputStream) key.attachment();
+        if (clientBuffer == null) {
+            clientBuffer = new ByteArrayOutputStream();
+            key.attach(clientBuffer);
+        }
+        Integer expectedLength = -1;
+
         try {
             ByteBuffer buffer = ByteBuffer.allocate(4096);
             int bytesRead = clientChannel.read(buffer);
 
             if (bytesRead == -1) {
                 clientChannel.close();
-                clientBuffers.remove(key);
-                expectedLengths.remove(key);
+                authenticatedUsers.remove(clientChannel);
                 logger.info("клиент отключился: {}", clientChannel.getRemoteAddress());
                 return;
             }
 
-            ByteArrayOutputStream clientBuffer = clientBuffers.get(key);
             buffer.flip();
-            clientBuffer.write(buffer.array(), buffer.position(), buffer.remaining());
+            byte[] readData = new byte[buffer.remaining()];
+            buffer.get(readData);
+            clientBuffer.write(readData);
+            logger.info("прочитано байт: {}, буфер: {}", readData.length, clientBuffer.size());
 
-            Integer expectedLength = expectedLengths.get(key);
-            if (expectedLength == -1 && clientBuffer.size() >= 4) {
-                byte[] data = clientBuffer.toByteArray();
+            byte[] data = clientBuffer.toByteArray();
+            if (data.length >= 4) {
                 ByteBuffer lengthBuffer = ByteBuffer.wrap(data, 0, 4);
                 expectedLength = lengthBuffer.getInt();
-                expectedLengths.put(key, expectedLength);
-                clientBuffer.reset();
-                clientBuffer.write(data, 4, data.length - 4);
-            }
+                logger.info("ожидаемая длина: {}", expectedLength);
 
-            if (expectedLength != -1 && clientBuffer.size() >= expectedLength) {
-                Request request = deserialize(clientBuffer.toByteArray());
-                logger.info("получен запрос: {}", request);
+                if (data.length >= 4 + expectedLength) {
+                    byte[] requestData = new byte[expectedLength];
+                    System.arraycopy(data, 4, requestData, 0, expectedLength);
+                    logger.info("десериализация запроса, длина: {}", requestData.length);
+                    Request request = deserialize(requestData);
+                    logger.info("получен запрос: {}", request);
 
-                Response response = CommandManager.executeRequest(request);
-                if (request.getCommand().equals("shutdown")) {
-                    notifyAllClients(selector, response);
-                    logger.info("сервер завершает работу");
-                    System.exit(0);
+                    Response response;
+                    String command = request.getCommand(); // исправлено
+                    String login = request.getLogin();
+                    String password = request.getPassword();
+
+                    if (command.equals("login") || command.equals("register")) {
+                        boolean dbInitialized = collectionManager.initDb(
+                                "jdbc:postgresql://pg.itmo.ru:5432/studs",
+                                "s466080",
+                                "gcjf=3477"
+                        );
+                        if (!dbInitialized) {
+                            logger.error("не удалось подключиться к базе");
+                            response = Response.error("ошибка подключения к базе");
+                        } else {
+                            if (command.equals("login")) {
+                                if (collectionManager.authenticateUser(login, password)) {
+                                    authenticatedUsers.put(clientChannel, login);
+                                    collectionManager.loadFromDb();
+                                    response = Response.success("авторизация успешна");
+                                    logger.info("успешная авторизация: {}", login);
+                                } else {
+                                    response = Response.error("неверный логин или пароль");
+                                    logger.warn("неверный логин/пароль: {}", login);
+                                }
+                            } else {
+                                if (collectionManager.registerUser(login, password)) {
+                                    authenticatedUsers.put(clientChannel, login);
+                                    collectionManager.loadFromDb();
+                                    response = Response.success("регистрация успешна");
+                                    logger.info("успешная регистрация: {}", login);
+                                } else {
+                                    response = Response.error("пользователь уже существует");
+                                    logger.warn("пользователь уже существует: {}", login);
+                                }
+                            }
+                        }
+                    } else {
+                        String userId = authenticatedUsers.get(clientChannel);
+                        if (userId == null) {
+                            response = Response.error("требуется авторизация: используйте 'login' или 'register'");
+                            logger.warn("неавторизованный запрос: {}", command);
+                        } else {
+                            request.setLogin(userId);
+                            response = CommandManager.executeRequest(request);
+                            if (command.equals("shutdown")) {
+                                notifyAllClients(selector, response);
+                                logger.info("сервер завершает работу");
+                                System.exit(0);
+                            }
+                        }
+                    }
+
+                    sendResponse(key, clientChannel, response);
+                    clientBuffer.reset();
                 }
-
-                key.attach(response);
-                key.interestOps(SelectionKey.OP_WRITE);
-
-                clientBuffer.reset();
-                expectedLengths.put(key, -1);
             }
-        } catch (IOException | ClassNotFoundException e) {
-            logger.error("ошибка при обработке клиента");
+
+            key.interestOps(SelectionKey.OP_READ);
+        } catch (IOException | ClassNotFoundException | SQLException e) {
+            logger.error("ошибка при обработке клиента: {}", e.getMessage(), e);
             try {
                 clientChannel.close();
-                clientBuffers.remove(key);
-                expectedLengths.remove(key);
+                authenticatedUsers.remove(clientChannel);
             } catch (IOException ignored) {}
         }
     }
@@ -181,26 +213,12 @@ public class Server {
         for (SelectionKey key : selector.keys()) {
             if (key.isValid() && key.channel() instanceof SocketChannel) {
                 SocketChannel clientChannel = (SocketChannel) key.channel();
-                try {
-                    byte[] data = serialize(exitResponse);
-                    ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
-                    lengthBuffer.putInt(data.length);
-                    lengthBuffer.flip();
-                    clientChannel.write(lengthBuffer);
-                    ByteBuffer dataBuffer = ByteBuffer.wrap(data);
-                    clientChannel.write(dataBuffer);
-                    logger.info("уведомление отправлено клиенту");
-                } catch (IOException e) {
-                    logger.error("ошибка отправки уведомления клиенту");
-                }
+                sendResponse(key, clientChannel, exitResponse);
             }
         }
     }
 
-    private void sendPendingResponse(SelectionKey key) {
-        SocketChannel clientChannel = (SocketChannel) key.channel();
-        Response response = (Response) key.attachment();
-
+    private void sendResponse(SelectionKey key, SocketChannel clientChannel, Response response) {
         try {
             byte[] data = serialize(response);
             ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
@@ -210,14 +228,12 @@ public class Server {
             ByteBuffer dataBuffer = ByteBuffer.wrap(data);
             clientChannel.write(dataBuffer);
             logger.info("отправлен ответ клиенту {}: {}", clientChannel.getRemoteAddress(), response);
-            key.attach(null);
             key.interestOps(SelectionKey.OP_READ);
         } catch (IOException e) {
+            logger.error("ошибка отправки ответа: {}", e.getMessage());
             try {
-                logger.error("ошибка при отправке ответа клиенту {}: {}", clientChannel.getRemoteAddress(), e.getMessage());
                 clientChannel.close();
-                clientBuffers.remove(key);
-                expectedLengths.remove(key);
+                authenticatedUsers.remove(clientChannel);
             } catch (IOException ignored) {}
         }
     }

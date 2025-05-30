@@ -1,41 +1,27 @@
 package com.vehicleServer.managers;
 
-
 import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 import com.vehicleServer.commands.*;
 import org.slf4j.Logger;
-
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 public class CommandManager {
-    private static final Map<String, Command> commands = new HashMap<>(); // Список всех команд
+    private static final Map<String, Command> commands = new HashMap<>();
     private static CollectionManager collectionManager;
-    private static String filePath;
     private static Logger logger;
 
-
-
-    public static void initialize(CollectionManager manager,Logger log) {
+    public static void initialize(CollectionManager manager, Logger log) {
         collectionManager = manager;
         logger = log;
-        filePath = System.getenv("FILE_PATH");
-
-        if (filePath == null || filePath.trim().isEmpty()) {
-            filePath = "data.json"; // Значение по умолчанию
-            logger.info("Переменная окружения FILE_PATH не задана. Использую значение по умолчанию: " + filePath);
-        } else {
-            logger.info("Использую путь к файлу из окружения: " + filePath);
-        }
-
         commands.put("help", new HelpCommand(commands));
         commands.put("show", new ShowCommand(collectionManager));
         commands.put("insert", new InsertCommand(collectionManager));
         commands.put("shutdown", new ExitCommand(collectionManager));
-        commands.put("save", new SaveCommand(collectionManager,filePath));
-        commands.put("load", new LoadCommand(collectionManager,filePath));
         commands.put("clear", new ClearCommand(collectionManager));
         commands.put("history", new HistoryCommand());
         commands.put("info", new InfoCommand(collectionManager));
@@ -45,27 +31,44 @@ public class CommandManager {
         commands.put("filter_greater_than_engine_power", new ShowByPower(collectionManager));
         commands.put("sum_of_engine_power", new SumOfPower(collectionManager));
         commands.put("replace_if_lower", new ReplaceIfLowerCommand(collectionManager));
-        commands.put("update", new UpdateCommand(collectionManager));
-        commands.put("execute_script", new ExecuteFileCommand(collectionManager));//пример : /Users/mac/scrypt.txt
-        commands.put("", new PassCommand()); // Заглушка для пустого ввода
+        commands.put("execute_script", new ExecuteFileCommand(collectionManager));
+        commands.put("register", new RegisterCommand(collectionManager));
+        commands.put("", new PassCommand());
     }
-
 
     public static Response executeRequest(Request request) {
         String commandName = request.getCommand();
-
         if (commandName == null || commandName.trim().isEmpty()) {
-            return Response.error("Ошибка: команда не может быть пустой. Введите 'help' для списка доступных команд.");
+            return Response.error("команда не может быть пустой. введите 'help' для помощи");
         }
-
         Command command = commands.get(commandName);
-
         if (command == null) {
-            return Response.error("Ошибка: команда '" + commandName + "' не найдена. Используйте 'help' для получения списка доступных команд.");
+            return Response.error("команда '" + commandName + "' не найдена. используйте 'help'");
         }
-
-
+        if (!commandName.equals("register") && !commandName.equals("help") && !request.getLogin().equals("console")) {
+            try {
+                if (!collectionManager.registerUser(request.getLogin(), md5(request.getPassword()))) {
+                    return Response.error("неверный логин или пароль");
+                }
+            } catch (Exception e) {
+                return Response.error("ошибка авторизации: " + e.getMessage());
+            }
+        }
         HistoryCommand.addToHistory(request.getCommand());
         return command.execute(request);
+    }
+
+    private static String md5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

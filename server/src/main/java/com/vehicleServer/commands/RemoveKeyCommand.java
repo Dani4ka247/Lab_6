@@ -1,8 +1,8 @@
 package com.vehicleServer.commands;
 
+import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
-import com.vehicleShared.managers.CollectionManager;
 
 public class RemoveKeyCommand implements Command {
     private final CollectionManager collectionManager;
@@ -15,19 +15,24 @@ public class RemoveKeyCommand implements Command {
     public Response execute(Request request) {
         String argument = request.getArgument();
         if (argument == null || argument.isEmpty()) {
-            return Response.error("Ошибка: команда 'remove_key' требует указания ключа.");
+            return Response.error("нужен id");
         }
-
         try {
-            int key = Integer.parseInt(argument);
-            if (!collectionManager.containsKey(key)) {
-                return Response.error("Ошибка: ключ " + key + " не найден в коллекции.");
+            long id = Long.parseLong(argument);
+            if (!collectionManager.containsKey(id)) {
+                return Response.error("vehicle с id " + id + " не найден");
             }
-
-            collectionManager.remove(key);
-            return Response.success("Элемент с ключом " + key + " удален.");
+            if (!collectionManager.canModify(id, request.getLogin())) {
+                return Response.error("это не твой vehicle");
+            }
+            if (collectionManager.removeVehicle(id, request.getLogin())) {
+                return Response.success("vehicle удалён");
+            }
+            return Response.error("ошибка удаления");
         } catch (NumberFormatException e) {
-            return Response.error("Ошибка: ключ должен быть целым числом.");
+            return Response.error("id должен быть числом");
+        } catch (Exception e) {
+            return Response.error("ошибка: " + e.getMessage());
         }
     }
 

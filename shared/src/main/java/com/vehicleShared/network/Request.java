@@ -4,13 +4,21 @@ import com.vehicleShared.model.Vehicle;
 import java.io.Serializable;
 
 public class Request implements Serializable {
-    private String command; // Имя команды
-    private String argument; // Аргумент команды (может быть null)
-    private Vehicle vehicle; // Объект Vehicle (может быть null)
+    private String command;
+    private String argument;
+    private Vehicle vehicle;
+    private String login;
+    private String password;
 
-    public Request(String command, String argument) {
+    public Request(String command, String argument, String login, String password) {
         this.command = command;
         this.argument = argument;
+        this.login = login;
+        this.password = password;
+    }
+
+    public void setLogin(String login){
+        this.login=login;
     }
 
     public String getCommand() {
@@ -29,8 +37,16 @@ public class Request implements Serializable {
         this.vehicle = vehicle;
     }
 
+    public String getLogin() {
+        return login;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
     @Override
     public String toString() {
-        return "Request{command='" + command + "', argument='" + argument + "', vehicle=" + vehicle + '}';
+        return "Request{command='" + command + "', argument='" + argument + "', vehicle=" + vehicle + ", login='" + login + "'}";
     }
 }

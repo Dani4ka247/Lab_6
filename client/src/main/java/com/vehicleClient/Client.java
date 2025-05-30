@@ -27,6 +27,9 @@ public class Client {
     private boolean waitingForResponse = false;
     private String lastArgument = null;
     private String lastCommand = null;
+    private String login = null;
+    private String password = null;
+    private boolean authenticated = false;
 
     public Client(String host, int port) {
         this.host = host;
@@ -64,7 +67,9 @@ public class Client {
                     }
                 }
 
-                if (socketChannel.isConnected() && !waitingForResponse) {
+                if (socketChannel.isConnected() && !waitingForResponse && !authenticated) {
+                    promptAuth();
+                } else if (socketChannel.isConnected() && !waitingForResponse) {
                     promptUserInput();
                 }
             }
@@ -89,29 +94,42 @@ public class Client {
 
     private void read(SelectionKey key) {
         SocketChannel channel = (SocketChannel) key.channel();
+        ByteArrayOutputStream clientBuffer = (ByteArrayOutputStream) key.attachment();
+        if (clientBuffer == null) {
+            clientBuffer = new ByteArrayOutputStream();
+            key.attach(clientBuffer);
+        }
+
         try {
             ByteBuffer byteBuffer = ByteBuffer.allocate(4096);
             int bytesRead = channel.read(byteBuffer);
 
             if (bytesRead == -1) {
-                channel.close();
-                isRunning = false;
+                System.out.println("сервер закрыл соединение");
+                reconnect();
                 return;
             }
 
             byteBuffer.flip();
-            buffer.write(byteBuffer.array(), byteBuffer.position(), byteBuffer.remaining());
+            byte[] readData = new byte[byteBuffer.remaining()];
+            byteBuffer.get(readData);
+            clientBuffer.write(readData);
+            System.out.println("прочитано байт: " + readData.length);
 
-            if (expectedLength == -1 && buffer.size() >= 4) {
-                byte[] data = buffer.toByteArray();
+            byte[] data = clientBuffer.toByteArray();
+            if (expectedLength == -1 && data.length >= 4) {
                 ByteBuffer lengthBuffer = ByteBuffer.wrap(data, 0, 4);
                 expectedLength = lengthBuffer.getInt();
-                buffer.reset();
-                buffer.write(data, 4, data.length - 4);
+                System.out.println("ожидаемая длина: " + expectedLength);
+                clientBuffer.reset();
+                clientBuffer.write(data, 4, data.length - 4);
             }
 
-            if (expectedLength != -1 && buffer.size() >= expectedLength) {
-                Response response = deserialize(buffer.toByteArray());
+            if (expectedLength != -1 && clientBuffer.size() >= expectedLength) {
+                byte[] responseData = new byte[expectedLength];
+                System.arraycopy(clientBuffer.toByteArray(), 0, responseData, 0, expectedLength);
+                System.out.println("десериализация ответа, длина: " + responseData.length);
+                Response response = deserialize(responseData);
                 System.out.println("ответ сервера: " + response.getMessage());
 
                 if (response.hasData()) {
@@ -122,10 +140,15 @@ public class Client {
                     System.out.println("ошибка на сервере: " + response.getException().getMessage());
                 }
 
+                if (response.isSuccess() && (response.getMessage().contains("авторизация успешна") || response.getMessage().contains("регистрация успешна"))) {
+                    authenticated = true;
+                    System.out.println("авторизация прошла успешно, вводите команды!");
+                }
+
                 if (response.requiresVehicle()) {
                     System.out.println("для выполнения команды нужен объект vehicle");
                     Vehicle vehicle = CollectionManager.requestVehicleInformation(scanner, IdManager.getUnicId());
-                    Request vehicleRequest = new Request(lastCommand, lastArgument); // используем сохраненный аргумент
+                    Request vehicleRequest = new Request(lastCommand, lastArgument, login, password);
                     vehicleRequest.setVehicle(vehicle);
                     key.attach(vehicleRequest);
                     key.interestOps(SelectionKey.OP_WRITE);
@@ -134,17 +157,31 @@ public class Client {
                     key.attach(null);
                     key.interestOps(SelectionKey.OP_READ);
                     waitingForResponse = false;
-                    lastArgument = null; // сбрасываем после успешной команды
+                    lastArgument = null;
+                    lastCommand = null;
                 }
-                buffer.reset();
+                clientBuffer.reset();
                 expectedLength = -1;
             }
+            key.interestOps(SelectionKey.OP_READ);
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("ошибка при чтении: " + e.getMessage());
-            try {
-                channel.close();
-                isRunning = false;
-            } catch (IOException ignored) {}
+            e.printStackTrace();
+            reconnect();
+        }
+    }
+
+    private void reconnect() {
+        try {
+            if (socketChannel != null) socketChannel.close();
+            socketChannel = SocketChannel.open();
+            socketChannel.configureBlocking(false);
+            socketChannel.connect(new InetSocketAddress(host, port));
+            socketChannel.register(selector, SelectionKey.OP_CONNECT);
+            System.out.println("попытка переподключения...");
+        } catch (IOException e) {
+            System.err.println("не удалось переподключиться: " + e.getMessage());
+            isRunning = false;
         }
     }
 
@@ -153,20 +190,51 @@ public class Client {
         Request request = (Request) key.attachment();
 
         byte[] data = serialize(request);
+        System.out.println("отправка запроса, длина: " + data.length + ", команда: " + request.getCommand());
+
         ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
         lengthBuffer.putInt(data.length);
         lengthBuffer.flip();
-        channel.write(lengthBuffer);
+        while (lengthBuffer.hasRemaining()) {
+            channel.write(lengthBuffer);
+        }
+
         ByteBuffer dataBuffer = ByteBuffer.wrap(data);
-        channel.write(dataBuffer);
+        while (dataBuffer.hasRemaining()) {
+            channel.write(dataBuffer);
+        }
 
         key.interestOps(SelectionKey.OP_READ);
         key.attach(null);
         waitingForResponse = true;
     }
 
+    private void promptAuth() {
+        System.out.print("введите команду (login/register): ");
+        if (scanner.hasNextLine()) {
+            String command = scanner.nextLine().trim();
+            if (!command.equals("login") && !command.equals("register")) {
+                System.out.println("неверная команда, используйте 'login' или 'register'");
+                return;
+            }
+            System.out.print("логин: ");
+            login = scanner.nextLine().trim();
+            System.out.print("пароль: ");
+            password = scanner.nextLine().trim();
+
+            Request request = new Request(command, null, login, password);
+            try {
+                SelectionKey key = socketChannel.keyFor(selector);
+                key.attach(request);
+                key.interestOps(SelectionKey.OP_WRITE);
+            } catch (Exception e) {
+                System.err.println("ошибка при отправке запроса: " + e.getMessage());
+            }
+        }
+    }
+
     private void promptUserInput() {
-        System.out.print("введите команду: ");
+        System.out.print("введите команду (help/show/insert/update/remove/exit): ");
         if (scanner.hasNextLine()) {
             String input = scanner.nextLine().trim();
 
@@ -186,7 +254,6 @@ public class Client {
             String command = parts[0];
             String argument = parts.length > 1 ? parts[1] : null;
 
-            // проверка на запрещенную команду
             if ("save".equalsIgnoreCase(command)) {
                 System.out.println("нет доступа, используй серверную консоль, бебебе!");
                 return;
@@ -194,7 +261,7 @@ public class Client {
 
             lastArgument = argument;
             lastCommand = command;
-            Request request = new Request(command, argument);
+            Request request = new Request(command, argument, login, password);
             try {
                 SelectionKey key = socketChannel.keyFor(selector);
                 key.attach(request);
