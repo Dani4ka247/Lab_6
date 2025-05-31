@@ -114,4 +114,8 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         FuelType fuelType = InputValidator.getValidInput(scanner, s -> FuelType.values()[Integer.parseInt(s.trim()) - 1], "выберите тип топлива {1:GASOLINE, 2:KEROSENE, 3:ELECTRICITY, 4:MANPOWER, 5:NUCLEAR}: ", "введи номер топлива");
         return new Vehicle(id, coordinates, vehicleName, enginePower, vehicleType, fuelType);
     }
+
+    public DbManager getDbManager() {
+        return dbManager;
+    }
 }

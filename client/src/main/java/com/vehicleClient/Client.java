@@ -74,7 +74,7 @@ public class Client {
             request.setVehicle(vehicle);
             System.out.println("отправляем запрос: " + command);
             Response response = sendRequest(socketChannel, request);
-            System.out.println(response.getMessage()); // только один println
+            System.out.println(response.getMessage());
             if (response.requiresVehicle()) {
                 System.out.println("Введите данные для vehicle:");
                 vehicle = createVehicle(scanner, argument != null ? Long.parseLong(argument) : 0);
@@ -126,7 +126,6 @@ public class Client {
             try (ByteArrayInputStream bais = new ByteArrayInputStream(responseData);
                  ObjectInputStream ois = new ObjectInputStream(bais)) {
                 Response response = (Response) ois.readObject();
-                System.out.println("получен ответ: " + response.getMessage());
                 return response;
             }
         } catch (IOException | ClassNotFoundException e) {

@@ -10,23 +10,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Lab7 start~2">
-      <change afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/DbManager.java" afterDir="false" />
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Lab7 main logistics done">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/main/java/com/vehicleClient/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicleClient/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RegisterCommand.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveByPower.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveByPower.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveGreaterKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveGreaterKey.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveKeyCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/RemoveKeyCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ReplaceIfLowerCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ReplaceIfLowerCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/UpdateCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/UpdateCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/FileManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/FileManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/serverNetwork/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/serverNetwork/Server.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/CollectionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/CollectionManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/model/Vehicle.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/model/Vehicle.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -285,7 +272,15 @@
       <option name="project" value="LOCAL" />
       <updated>1748636464314</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Lab7 main logistics done">
+      <option name="closed" value="true" />
+      <created>1748650082982</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1748650082982</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -303,6 +298,7 @@
     <MESSAGE value="Refactor logging and add build artifacts configuration&#10;&#10;Introduced `logback.xml` for structured server-side logging and replaced `System.out` with SLF4J for improved logging consistency. Added IntelliJ IDEA artifact configurations for building client and server JARs. Updated workspace settings and metadata for streamlined project management." />
     <MESSAGE value="Lab7 start~" />
     <MESSAGE value="Lab7 start~2" />
-    <option name="LAST_COMMIT_MESSAGE" value="Lab7 start~2" />
+    <MESSAGE value="Lab7 main logistics done" />
+    <option name="LAST_COMMIT_MESSAGE" value="Lab7 main logistics done" />
   </component>
 </project>
