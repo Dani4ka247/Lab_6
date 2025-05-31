@@ -1,8 +1,8 @@
 package com.vehicleServer.commands;
 
+import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
-import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.model.Vehicle;
 
 public class ReplaceIfLowerCommand implements Command {
@@ -15,6 +15,7 @@ public class ReplaceIfLowerCommand implements Command {
     @Override
     public Response execute(Request request) {
         String argument = request.getArgument();
+        String userId = request.getLogin();
         if (argument == null || argument.isEmpty()) {
             return Response.error("нужен id");
         }
@@ -27,14 +28,14 @@ public class ReplaceIfLowerCommand implements Command {
             if (!collectionManager.containsKey(id)) {
                 return Response.error("vehicle с id " + id + " не найден");
             }
-            if (!collectionManager.canModify(id, request.getLogin())) {
+            if (!collectionManager.getDbManager().canModify(id, userId)) {
                 return Response.error("это не твой vehicle");
             }
             Vehicle oldVehicle = collectionManager.get(id);
             if (newVehicle.getPower() >= oldVehicle.getPower()) {
                 return Response.success("новая мощность (" + newVehicle.getPower() + ") не меньше старой (" + oldVehicle.getPower() + ")");
             }
-            if (collectionManager.updateVehicle(id, newVehicle, request.getLogin())) {
+            if (collectionManager.update(id, newVehicle, userId)) {
                 return Response.success("vehicle с id " + id + " заменён");
             }
             return Response.error("ошибка замены");

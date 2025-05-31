@@ -1,293 +1,137 @@
 package com.vehicleClient;
 
-import com.vehicleShared.managers.CollectionManager;
-import com.vehicleShared.managers.IdManager;
-import com.vehicleShared.model.Vehicle;
+import com.vehicleShared.model.*;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
 import java.util.Scanner;
 
 public class Client {
-    private final String host;
-    private final int port;
-    private Selector selector;
-    private SocketChannel socketChannel;
-    private ByteArrayOutputStream buffer;
-    private boolean isRunning = true;
-    private Scanner scanner;
-    private int expectedLength = -1;
-    private boolean waitingForResponse = false;
-    private String lastArgument = null;
-    private String lastCommand = null;
-    private String login = null;
-    private String password = null;
-    private boolean authenticated = false;
+    private final String serverAddress;
+    private final int serverPort;
+    private String currentLogin;
 
-    public Client(String host, int port) {
-        this.host = host;
-        this.port = port;
-        this.buffer = new ByteArrayOutputStream();
-        this.scanner = new Scanner(System.in);
+    public Client(String serverAddress, int serverPort) {
+        this.serverAddress = serverAddress;
+        this.serverPort = serverPort;
     }
 
     public void start() {
-        try {
-            selector = Selector.open();
-            socketChannel = SocketChannel.open();
-            socketChannel.configureBlocking(false);
-            socketChannel.connect(new InetSocketAddress(host, port));
-            socketChannel.register(selector, SelectionKey.OP_CONNECT);
-
-            System.out.println("попытка подключения к серверу...");
-
-            while (isRunning) {
-                selector.select(100);
-                Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-
-                while (keys.hasNext()) {
-                    SelectionKey key = keys.next();
-                    keys.remove();
-
-                    if (!key.isValid()) continue;
-
-                    if (key.isConnectable()) {
-                        connect(key);
-                    } else if (key.isReadable()) {
-                        read(key);
-                    } else if (key.isWritable()) {
-                        write(key);
-                    }
+        try (SocketChannel socketChannel = SocketChannel.open()) {
+            socketChannel.connect(new InetSocketAddress(serverAddress, serverPort));
+            System.out.println("Успешно подключен к серверу");
+            Scanner scanner = new Scanner(System.in);
+            while (true) {
+                System.out.print("Введите команду (login/register): ");
+                String command = scanner.nextLine().trim();
+                if (command.equals("exit")) {
+                    break;
                 }
-
-                if (socketChannel.isConnected() && !waitingForResponse && !authenticated) {
-                    promptAuth();
-                } else if (socketChannel.isConnected() && !waitingForResponse) {
-                    promptUserInput();
+                if (command.equals("login") || command.equals("register")) {
+                    System.out.print("Логин: ");
+                    String login = scanner.nextLine().trim();
+                    System.out.print("Пароль: ");
+                    String password = scanner.nextLine().trim();
+                    Request request = new Request(command, null, login, password);
+                    Response response = sendRequest(socketChannel, request);
+                    System.out.println(response.getMessage());
+                    if (response.isSuccess() && command.equals("login")) {
+                        currentLogin = login;
+                        handleAuthenticatedCommands(scanner, socketChannel);
+                    }
+                } else {
+                    System.out.println("Неизвестная команда. Используйте login или register");
                 }
             }
         } catch (IOException e) {
-            System.err.println("ошибка клиента: " + e.getMessage());
-        } finally {
-            try {
-                if (socketChannel != null) socketChannel.close();
-                if (selector != null) selector.close();
-            } catch (IOException ignored) {}
-        }
-        System.out.println("клиент завершил работу");
-    }
-
-    private void connect(SelectionKey key) throws IOException {
-        SocketChannel channel = (SocketChannel) key.channel();
-        if (channel.finishConnect()) {
-            System.out.println("успешно подключен к серверу");
-            key.interestOps(SelectionKey.OP_READ);
-            key.attach(buffer);
+            System.err.println("Ошибка подключения: " + e.getMessage());
         }
     }
 
-    private void read(SelectionKey key) {
-        SocketChannel channel = (SocketChannel) key.channel();
-        ByteArrayOutputStream clientBuffer = (ByteArrayOutputStream) key.attachment();
-
-        synchronized (clientBuffer) {
-            try {
-                ByteBuffer byteBuffer = ByteBuffer.allocate(4096);
-                int bytesRead = channel.read(byteBuffer);
-
-                if (bytesRead == -1) {
-                    System.out.println("сервер закрыл соединение");
-                    reconnect();
-                    return;
-                }
-
-                byteBuffer.flip();
-                byte[] readData = new byte[byteBuffer.remaining()];
-                byteBuffer.get(readData);
-                clientBuffer.write(readData);
-                System.out.println("прочитано байт: " + readData.length);
-
-                byte[] data = clientBuffer.toByteArray();
-                if (expectedLength == -1 && data.length >= 4) {
-                    ByteBuffer lengthBuffer = ByteBuffer.wrap(data, 0, 4);
-                    expectedLength = lengthBuffer.getInt();
-                    System.out.println("ожидаемая длина: " + expectedLength);
-                    clientBuffer.reset();
-                    clientBuffer.write(data, 4, data.length - 4);
-                }
-
-                if (expectedLength != -1 && clientBuffer.size() >= expectedLength) {
-                    byte[] responseData = new byte[expectedLength];
-                    System.arraycopy(clientBuffer.toByteArray(), 0, responseData, 0, expectedLength);
-                    System.out.println("десериализация ответа, длина: " + responseData.length);
-                    Response response = deserialize(responseData);
-                    System.out.println("ответ сервера: " + response.getMessage());
-
-                    if (response.hasData()) {
-                        System.out.println("данные: " + response.getData());
-                    }
-
-                    if (response.getException() != null) {
-                        System.out.println("ошибка на сервере: " + response.getException().getMessage());
-                    }
-
-                    if (response.isSuccess() && (response.getMessage().contains("авторизация успешна") || response.getMessage().contains("регистрация успешна"))) {
-                        authenticated = true;
-                        System.out.println("авторизация прошла успешно, вводите команды!");
-                    }
-
-                    if (response.requiresVehicle()) {
-                        System.out.println("для выполнения команды нужен объект vehicle");
-                        Vehicle vehicle = CollectionManager.requestVehicleInformation(scanner, IdManager.getUnicId());
-                        Request vehicleRequest = new Request(lastCommand, lastArgument, login, password);
-                        vehicleRequest.setVehicle(vehicle);
-                        key.attach(vehicleRequest);
-                        key.interestOps(SelectionKey.OP_WRITE);
-                        waitingForResponse = true;
-                    } else {
-                        key.attach(clientBuffer);
-                        key.interestOps(SelectionKey.OP_READ);
-                        waitingForResponse = false;
-                        lastArgument = null;
-                        lastCommand = null;
-                    }
-                    clientBuffer.reset();
-                    expectedLength = -1;
-                }
-                key.interestOps(SelectionKey.OP_READ);
-            } catch (IOException | ClassNotFoundException e) {
-                System.err.println("ошибка при чтении: " + e.getMessage());
-                e.printStackTrace();
-                reconnect();
-            }
-        }
-    }
-
-    private void reconnect() {
-        try {
-            if (socketChannel != null) socketChannel.close();
-            socketChannel = SocketChannel.open();
-            socketChannel.configureBlocking(false);
-            socketChannel.connect(new InetSocketAddress(host, port));
-            socketChannel.register(selector, SelectionKey.OP_CONNECT);
-            System.out.println("попытка переподключения...");
-            buffer.reset();
-            expectedLength = -1;
-        } catch (IOException e) {
-            System.err.println("не удалось переподключиться: " + e.getMessage());
-            isRunning = false;
-        }
-    }
-
-    private void write(SelectionKey key) throws IOException {
-        SocketChannel channel = (SocketChannel) key.channel();
-        Request request = (Request) key.attachment();
-
-        byte[] data = serialize(request);
-        System.out.println("отправка запроса, длина: " + data.length + ", команда: " + request.getCommand());
-
-        ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
-        lengthBuffer.putInt(data.length);
-        lengthBuffer.flip();
-        synchronized (channel) {
-            while (lengthBuffer.hasRemaining()) {
-                channel.write(lengthBuffer);
-            }
-            ByteBuffer dataBuffer = ByteBuffer.wrap(data);
-            while (dataBuffer.hasRemaining()) {
-                channel.write(dataBuffer);
-            }
-        }
-
-        key.interestOps(SelectionKey.OP_READ);
-        key.attach(buffer);
-        waitingForResponse = true;
-    }
-
-    private void promptAuth() {
-        System.out.print("введите команду (login/register): ");
-        if (scanner.hasNextLine()) {
-            String command = scanner.nextLine().trim();
-            if (!command.equals("login") && !command.equals("register")) {
-                System.out.println("неверная команда, используйте 'login' или 'register'");
-                return;
-            }
-            System.out.print("логин: ");
-            login = scanner.nextLine().trim();
-            System.out.print("пароль: ");
-            password = scanner.nextLine().trim();
-
-            Request request = new Request(command, null, login, password);
-            try {
-                SelectionKey key = socketChannel.keyFor(selector);
-                key.attach(request);
-                key.interestOps(SelectionKey.OP_WRITE);
-                selector.wakeup();
-            } catch (Exception e) {
-                System.err.println("ошибка при отправке запроса: " + e.getMessage());
-            }
-        }
-    }
-
-    private void promptUserInput() {
-        System.out.print("введите команду (help/show/insert/update/remove/exit): ");
-        if (scanner.hasNextLine()) {
+    private void handleAuthenticatedCommands(Scanner scanner, SocketChannel socketChannel) {
+        while (true) {
+            System.out.print("Введите команду (help/show/insert/update/remove/exit): ");
             String input = scanner.nextLine().trim();
-
-            if (input.isEmpty()) {
-                if (!waitingForResponse) {
-                    System.out.println("команда не может быть пустой. введите 'help' для помощи");
-                }
-                return;
+            if (input.equals("exit")) {
+                break;
             }
-
-            if ("exit".equalsIgnoreCase(input)) {
-                isRunning = false;
-                return;
-            }
-
-            String[] parts = input.split(" ", 2);
+            String[] parts = input.split("\\s+", 2);
             String command = parts[0];
             String argument = parts.length > 1 ? parts[1] : null;
-
-            if ("save".equalsIgnoreCase(command)) {
-                System.out.println("нет доступа, используй серверную консоль, бебебе!");
-                return;
+            Vehicle vehicle = null;
+            if (command.equals("insert") || command.equals("update") || command.equals("replace_if_lower")) {
+                if (argument == null) {
+                    System.out.println("Нужен id");
+                    continue;
+                }
+                vehicle = createVehicle(scanner, Long.parseLong(argument));
             }
-
-            lastArgument = argument;
-            lastCommand = command;
-            Request request = new Request(command, argument, login, password);
-            try {
-                SelectionKey key = socketChannel.keyFor(selector);
-                key.attach(request);
-                key.interestOps(SelectionKey.OP_WRITE);
-                selector.wakeup();
-            } catch (Exception e) {
-                System.err.println("ошибка при отправке запроса: " + e.getMessage());
+            Request request = new Request(command, argument, currentLogin, null);
+            request.setVehicle(vehicle);
+            System.out.println("отправляем запрос: " + command);
+            Response response = sendRequest(socketChannel, request);
+            System.out.println(response.getMessage()); // только один println
+            if (response.requiresVehicle()) {
+                System.out.println("Введите данные для vehicle:");
+                vehicle = createVehicle(scanner, argument != null ? Long.parseLong(argument) : 0);
+                request = new Request(command, argument, currentLogin, null);
+                request.setVehicle(vehicle);
+                response = sendRequest(socketChannel, request);
+                System.out.println(response.getMessage());
             }
         }
     }
-
-    private byte[] serialize(Serializable object) throws IOException {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-            oos.writeObject(object);
-            oos.flush();
-            return baos.toByteArray();
-        }
+    private Vehicle createVehicle(Scanner scanner, long id) {
+        System.out.print("Введите название машины: ");
+        String name = scanner.nextLine().trim();
+        System.out.print("Введите координаты (x,y): ");
+        String[] coords = scanner.nextLine().trim().split(",");
+        float x = Float.parseFloat(coords[0]);
+        int y = Integer.parseInt(coords[1]);
+        System.out.print("Введите мощность двигателя: ");
+        float power = Float.parseFloat(scanner.nextLine().trim());
+        System.out.print("Выберите тип машины (1:CAR, 2:BOAT, 3:HOVERBOARD): ");
+        VehicleType type = VehicleType.values()[Integer.parseInt(scanner.nextLine().trim()) - 1];
+        System.out.print("Выберите тип топлива (1:GASOLINE, 2:KEROSENE, 3:ELECTRICITY, 4:MANPOWER, 5:NUCLEAR): ");
+        FuelType fuelType = FuelType.values()[Integer.parseInt(scanner.nextLine().trim()) - 1];
+        return new Vehicle(id, new Coordinates(x, y), name, power, type, fuelType);
     }
 
-    private Response deserialize(byte[] data) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data))) {
-            return (Response) ois.readObject();
+    private Response sendRequest(SocketChannel socketChannel, Request request) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+                oos.writeObject(request);
+            }
+            byte[] data = baos.toByteArray();
+            ByteBuffer buffer = ByteBuffer.allocate(4 + data.length);
+            buffer.putInt(data.length);
+            buffer.put(data);
+            buffer.flip();
+            socketChannel.write(buffer);
+            System.out.println("отправлен запрос: " + request.getCommand());
+            ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
+            socketChannel.read(lengthBuffer);
+            lengthBuffer.flip();
+            int length = lengthBuffer.getInt();
+            ByteBuffer dataBuffer = ByteBuffer.allocate(length);
+            socketChannel.read(dataBuffer);
+            dataBuffer.flip();
+            byte[] responseData = new byte[length];
+            dataBuffer.get(responseData);
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(responseData);
+                 ObjectInputStream ois = new ObjectInputStream(bais)) {
+                Response response = (Response) ois.readObject();
+                System.out.println("получен ответ: " + response.getMessage());
+                return response;
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("ошибка связи: " + e.getMessage());
+            return Response.error("Ошибка связи с сервером: " + e.getMessage());
         }
     }
 }

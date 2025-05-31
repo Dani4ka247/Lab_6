@@ -14,6 +14,7 @@ public class RemoveKeyCommand implements Command {
     @Override
     public Response execute(Request request) {
         String argument = request.getArgument();
+        String userId = request.getLogin();
         if (argument == null || argument.isEmpty()) {
             return Response.error("нужен id");
         }
@@ -22,10 +23,10 @@ public class RemoveKeyCommand implements Command {
             if (!collectionManager.containsKey(id)) {
                 return Response.error("vehicle с id " + id + " не найден");
             }
-            if (!collectionManager.canModify(id, request.getLogin())) {
+            if (!collectionManager.getDbManager().canModify(id, userId)) {
                 return Response.error("это не твой vehicle");
             }
-            if (collectionManager.removeVehicle(id, request.getLogin())) {
+            if (collectionManager.remove(id, userId) != null) {
                 return Response.success("vehicle удалён");
             }
             return Response.error("ошибка удаления");
@@ -38,6 +39,6 @@ public class RemoveKeyCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Удаляет элемент из коллекции по указанному ключу.";
+        return "удаляет элемент из коллекции по указанному ключу";
     }
 }

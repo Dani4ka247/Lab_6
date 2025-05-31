@@ -16,6 +16,7 @@ public class RemoveGreaterKey implements Command {
     @Override
     public Response execute(Request request) {
         String argument = request.getArgument();
+        String userId = request.getLogin();
         if (argument == null || argument.isEmpty()) {
             return Response.error("нужен id");
         }
@@ -26,7 +27,7 @@ public class RemoveGreaterKey implements Command {
                     .filter(key -> key > keyThreshold)
                     .filter(key -> {
                         try {
-                            return collectionManager.canModify(key, request.getLogin());
+                            return collectionManager.getDbManager().canModify(key, userId);
                         } catch (Exception e) {
                             return false;
                         }
@@ -39,7 +40,7 @@ public class RemoveGreaterKey implements Command {
 
             boolean allRemoved = true;
             for (Long id : keysToRemove) {
-                if (!collectionManager.removeVehicle(id, request.getLogin())) {
+                if (collectionManager.remove(id, userId) == null) {
                     allRemoved = false;
                 }
             }

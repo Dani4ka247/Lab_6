@@ -22,8 +22,9 @@ public class ShowCommand implements Command {
                 .collect(Collectors.joining("\n"));
         return Response.success(result);
     }
+
     @Override
     public String getDescription() {
-        return "Отображает все элементы коллекции в порядке возрастания мощности.";
+        return "Отображает все элементы коллекции текущего пользователя.";
     }
 }

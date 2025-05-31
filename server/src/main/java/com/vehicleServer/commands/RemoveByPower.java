@@ -17,6 +17,7 @@ public class RemoveByPower implements Command {
     @Override
     public Response execute(Request request) {
         String argument = request.getArgument();
+        String userId = request.getLogin();
         if (argument == null || argument.isEmpty()) {
             return Response.error("нужна мощность");
         }
@@ -27,7 +28,7 @@ public class RemoveByPower implements Command {
                     .filter(entry -> entry.getValue().getPower() == power)
                     .filter(entry -> {
                         try {
-                            return collectionManager.canModify(entry.getKey(), request.getLogin());
+                            return collectionManager.getDbManager().canModify(entry.getKey(), userId);
                         } catch (Exception e) {
                             return false;
                         }
@@ -41,7 +42,7 @@ public class RemoveByPower implements Command {
 
             boolean allRemoved = true;
             for (Long id : keysToRemove) {
-                if (!collectionManager.removeVehicle(id, request.getLogin())) {
+                if (collectionManager.remove(id, userId) == null) {
                     allRemoved = false;
                 }
             }

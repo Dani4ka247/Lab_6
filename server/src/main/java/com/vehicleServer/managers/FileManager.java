@@ -49,10 +49,10 @@ public class FileManager {
                     }
                     Request request = new Request(commandName, argument, login, password);
                     request.setVehicle(vehicle);
-                    responses.add(CommandManager.executeRequest(request));
+                    responses.add(CommandManager.executeRequest(request,true));
                 } else {
                     Request request = new Request(commandName, argument, login, password);
-                    responses.add(CommandManager.executeRequest(request));
+                    responses.add(CommandManager.executeRequest(request,true));
                 }
             }
         } catch (IOException e) {

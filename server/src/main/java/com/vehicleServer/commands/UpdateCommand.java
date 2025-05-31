@@ -1,9 +1,9 @@
 package com.vehicleServer.commands;
 
 import com.vehicleShared.managers.CollectionManager;
-import com.vehicleShared.model.Vehicle;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
+import com.vehicleShared.model.Vehicle;
 
 public class UpdateCommand implements Command {
     private final CollectionManager collectionManager;
@@ -15,6 +15,7 @@ public class UpdateCommand implements Command {
     @Override
     public Response execute(Request request) {
         String argument = request.getArgument();
+        String userId = request.getLogin();
         if (argument == null || argument.isEmpty()) {
             return Response.error("нужен id");
         }
@@ -27,10 +28,10 @@ public class UpdateCommand implements Command {
             if (!collectionManager.containsKey(id)) {
                 return Response.error("vehicle с id " + id + " не найден");
             }
-            if (!collectionManager.canModify(id, request.getLogin())) {
+            if (!collectionManager.getDbManager().canModify(id, userId)) {
                 return Response.error("это не твой vehicle");
             }
-            if (collectionManager.updateVehicle(id, vehicle, request.getLogin())) {
+            if (collectionManager.update(id, vehicle, userId)) {
                 return Response.success("vehicle обновлён");
             }
             return Response.error("ошибка обновления");
@@ -40,8 +41,9 @@ public class UpdateCommand implements Command {
             return Response.error("ошибка: " + e.getMessage());
         }
     }
+
     @Override
     public String getDescription() {
-        return "Обновляет элемент коллекции с указанным id.";
+        return "обновляет элемент коллекции с указанным id";
     }
 }

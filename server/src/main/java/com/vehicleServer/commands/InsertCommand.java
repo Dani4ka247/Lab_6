@@ -1,9 +1,9 @@
 package com.vehicleServer.commands;
 
 import com.vehicleShared.managers.CollectionManager;
-import com.vehicleShared.model.Vehicle;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
+import com.vehicleShared.model.Vehicle;
 
 public class InsertCommand implements Command {
     private final CollectionManager collectionManager;
@@ -14,15 +14,24 @@ public class InsertCommand implements Command {
 
     @Override
     public Response execute(Request request) {
+        String argument = request.getArgument();
+        String userId = request.getLogin();
         Vehicle vehicle = request.getVehicle();
         if (vehicle == null) {
             return Response.success("нужен объект vehicle", true);
         }
+        if (argument == null || argument.isEmpty()) {
+            return Response.error("нужен id");
+        }
         try {
-            if (collectionManager.addVehicle(vehicle, request.getLogin())) {
+            long id = Long.parseLong(argument);
+            vehicle.setId(id);
+            if (collectionManager.put(id, vehicle, userId) != null) {
                 return Response.success("vehicle добавлен");
             }
-            return Response.error("ошибка добавления");
+            return Response.error("ошибка добавления: проверь данные или права доступа");
+        } catch (NumberFormatException e) {
+            return Response.error("id должен быть числом");
         } catch (Exception e) {
             return Response.error("ошибка: " + e.getMessage());
         }
@@ -30,6 +39,6 @@ public class InsertCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "Добавляет новый элемент в коллекцию. Требуется указать аргумент.";
+        return "добавляет новый элемент в коллекцию с указанным id";
     }
 }
