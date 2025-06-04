@@ -4,6 +4,8 @@ import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 import com.vehicleShared.managers.CollectionManager;
 
+import java.sql.SQLException;
+
 public class ShowByPower implements Command {
     private final CollectionManager collectionManager;
 
@@ -13,6 +15,11 @@ public class ShowByPower implements Command {
 
     @Override
     public Response execute(Request request) {
+        try {
+            collectionManager.getDbManager().loadFromDb(request.getLogin());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         String argument = request.getArgument();
         if (argument == null || argument.isEmpty()) {
             return Response.error("Ошибка: команда 'show_by_power' требует указания мощности.");

@@ -70,6 +70,32 @@ public class DbManager {
         return vehicles;
     }
 
+    public synchronized List<Vehicle> loadFromDb(String userId) throws SQLException {
+        List<Vehicle> vehicles = new ArrayList<>();
+        String sql = "select * from vehicles where user_id=?";
+        try(PreparedStatement pr = db.prepareStatement(sql)) {
+            pr.setString(1,userId);
+            ResultSet rs = pr.executeQuery();
+            while (rs.next()) {
+                System.out.println("обрабатываем строку id=" + rs.getLong("id"));
+                Vehicle vehicle = new Vehicle(
+                        rs.getLong("id"),
+                        new Coordinates(rs.getFloat("coordinates_x"), rs.getInt("coordinates_y")),
+                        rs.getString("name"),
+                        rs.getFloat("engine_power"),
+                        VehicleType.valueOf(rs.getString("vehicle_type")),
+                        FuelType.valueOf(rs.getString("fuel_type"))
+                );
+                Timestamp ts = rs.getTimestamp("creation_date");
+                if (ts != null) {
+                    vehicle.setCreationDate(ts.toLocalDateTime().atZone(ZonedDateTime.now().getZone()));
+                }
+                vehicles.add(vehicle);
+            }
+            return vehicles;
+        }
+    }
+
     public synchronized boolean addVehicle(Vehicle vehicle, String userId) throws SQLException {
         if (db == null) throw new SQLException("база не подключена");
         if (vehicle.getName() == null || vehicle.getName().isEmpty() ||
