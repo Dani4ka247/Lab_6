@@ -16,9 +16,9 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         this.dbManager = dbManager;
     }
 
-    public synchronized void loadFromDb() throws SQLException {
+    public synchronized void loadFromDb(String userId) throws SQLException {
         clear();
-        for (Vehicle vehicle : dbManager.loadFromDb()) {
+        for (Vehicle vehicle : dbManager.loadFromDb(userId)) {
             super.put(vehicle.getId(), vehicle);
         }
     }
@@ -35,7 +35,7 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
                 return super.put(key, vehicle);
             }
         } catch (SQLException e) {
-            System.err.println("ошибка добавления в базу: " + e.getMessage());
+            System.err.println("ошибка добавления: " + e.getMessage());
         }
         return null;
     }

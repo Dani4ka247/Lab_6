@@ -6,6 +6,7 @@ import com.vehicleShared.network.Response;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
@@ -74,17 +75,16 @@ public class Client {
             request.setVehicle(vehicle);
             System.out.println("отправляем запрос: " + command);
             Response response = sendRequest(socketChannel, request);
-            System.out.println(response.getMessage());
             if (response.requiresVehicle()) {
                 System.out.println("Введите данные для vehicle:");
                 vehicle = createVehicle(scanner, argument != null ? Long.parseLong(argument) : 0);
                 request = new Request(command, argument, currentLogin, null);
                 request.setVehicle(vehicle);
                 response = sendRequest(socketChannel, request);
-                System.out.println(response.getMessage());
             }
         }
     }
+
     private Vehicle createVehicle(Scanner scanner, long id) {
         System.out.print("Введите название машины: ");
         String name = scanner.nextLine().trim();
@@ -103,6 +103,12 @@ public class Client {
 
     private Response sendRequest(SocketChannel socketChannel, Request request) {
         try {
+            if (!socketChannel.isOpen() || !socketChannel.isConnected()) {
+                System.out.println("sendRequest: канал закрыт");
+                return Response.error("Канал закрыт");
+            }
+            socketChannel.socket().setSoTimeout(5000);
+
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
                 oos.writeObject(request);
@@ -112,25 +118,55 @@ public class Client {
             buffer.putInt(data.length);
             buffer.put(data);
             buffer.flip();
-            socketChannel.write(buffer);
-            System.out.println("отправлен запрос: " + request.getCommand());
+            int totalBytesWritten = 0;
+            while (buffer.hasRemaining()) {
+                totalBytesWritten += socketChannel.write(buffer);
+            }
+            System.out.println("отправлен запрос: " + request.getCommand() + ", " + totalBytesWritten + " байт");
+
             ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
-            socketChannel.read(lengthBuffer);
+            int totalBytesRead = 0;
+            while (totalBytesRead < 4) {
+                int bytesRead = socketChannel.read(lengthBuffer);
+                if (bytesRead == -1) {
+                    System.out.println("sendRequest: сервер отключился");
+                    return Response.error("Сервер отключился");
+                }
+                totalBytesRead += bytesRead;
+            }
             lengthBuffer.flip();
             int length = lengthBuffer.getInt();
+            if (length <= 0 || length > 1_000_000) {
+                System.out.println("sendRequest: некорректная длина ответа: " + length);
+                return Response.error("Некорректная длина ответа");
+            }
+
             ByteBuffer dataBuffer = ByteBuffer.allocate(length);
-            socketChannel.read(dataBuffer);
+            totalBytesRead = 0;
+            while (totalBytesRead < length) {
+                int bytesRead = socketChannel.read(dataBuffer);
+                if (bytesRead == -1) {
+                    System.out.println("sendRequest: сервер отключился при чтении данных");
+                    return Response.error("Сервер отключился");
+                }
+                totalBytesRead += bytesRead;
+            }
             dataBuffer.flip();
             byte[] responseData = new byte[length];
             dataBuffer.get(responseData);
+
             try (ByteArrayInputStream bais = new ByteArrayInputStream(responseData);
                  ObjectInputStream ois = new ObjectInputStream(bais)) {
                 Response response = (Response) ois.readObject();
+                System.out.println("получен ответ: \n" + response.getMessage());
                 return response;
             }
+        } catch (SocketTimeoutException e) {
+            System.out.println("sendRequest: таймаут: " + e.getMessage());
+            return Response.error("Таймаут связи с сервером");
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("ошибка связи: " + e.getMessage());
-            return Response.error("Ошибка связи с сервером: " + e.getMessage());
+            System.out.println("sendRequest: ошибка: " + e.getMessage());
+            return Response.error("Ошибка связи: " + e.getMessage());
         }
     }
 }
