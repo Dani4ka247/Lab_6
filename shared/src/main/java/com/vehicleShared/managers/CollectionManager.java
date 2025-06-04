@@ -23,21 +23,19 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         }
     }
 
-    public Vehicle put(Long key, Vehicle vehicle, String userId) {
+    public void put(Long key, Vehicle vehicle, String userId) {
         try {
             if (vehicle.getName() == null || vehicle.getName().isEmpty() ||
                     vehicle.getCoordinates() == null || vehicle.getPower() <= 0 ||
                     vehicle.getType() == null || vehicle.getFuelType() == null ||
                     userId == null) {
-                return null;
             }
             if (dbManager.addVehicle(vehicle, userId)) {
-                return super.put(key, vehicle);
+                super.put(key, vehicle);
             }
         } catch (SQLException e) {
             System.err.println("ошибка добавления: " + e.getMessage());
         }
-        return null;
     }
 
     public boolean update(long id, Vehicle vehicle, String userId) {
@@ -70,14 +68,6 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         return null;
     }
 
-    public String getSortedVehiclesByPower() {
-        return entrySet()
-                .stream()
-                .sorted((e1, e2) -> Float.compare(e1.getValue().getPower(), e2.getValue().getPower()))
-                .map(entry -> entry.getKey() + " : " + entry.getValue().toString())
-                .collect(Collectors.joining("\n"));
-    }
-
     public String getVehiclesByMinPower(float minimumPower) {
         return entrySet()
                 .stream()
@@ -86,28 +76,14 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
                 .collect(Collectors.joining("\n"));
     }
 
-    public float sumOfEnginePower() {
-        return (float) entrySet()
-                .stream()
-                .mapToDouble(entry -> entry.getValue().getPower())
-                .sum();
-    }
-
-    public String getInfo() {
-        return "тип коллекции: ConcurrentHashMap\n" +
-                "дата инициализации: " + initializationDate + "\n" +
-                "количество элементов: " + size();
-    }
-
     public static Vehicle requestVehicleInformation(Scanner scanner, long id) {
-        String vehicleName = InputValidator.getValidInput(scanner, s -> {
-            if (s == null || s.trim().isEmpty()) throw new IllegalArgumentException();
-            return s;
-        }, "введите название машины: ", "название не может быть пустым!");
+        String vehicleName = InputValidator.getValidInput(scanner, s -> s, "введите название машины: ", "название не может быть пустым!");
         Coordinates coordinates = InputValidator.getValidInput(scanner, Coordinates::parser, "введите координаты машины в формате x,y: ", "введи два числа через запятую (x<982,y<67), например 22.8,7");
         Float enginePower = InputValidator.getValidInput(scanner, s -> {
             float power = Float.parseFloat(s);
-            if (power <= 0) throw new IllegalArgumentException();
+            if (power <= 0) {
+                return 0f;
+            }
             return power;
         }, "введите мощность двигателя машины: ", "мощность должна быть числом больше 0");
         VehicleType vehicleType = InputValidator.getValidInput(scanner, s -> VehicleType.values()[Integer.parseInt(s.trim()) - 1], "выберите тип машины {1:CAR, 2:BOAT, 3:HOVERBOARD}: ", "введи номер типа");

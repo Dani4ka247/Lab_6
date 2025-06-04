@@ -4,7 +4,6 @@ import com.vehicleShared.managers.CollectionManager;
 import com.vehicleShared.network.Request;
 import com.vehicleShared.network.Response;
 
-import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 public class ShowCommand implements Command {
@@ -17,18 +16,16 @@ public class ShowCommand implements Command {
     @Override
     public Response execute(Request request) {
         String userId = request.getLogin();
-        try {
-            collectionManager.loadFromDb(userId); // Загружаем только машины пользователя
-            String result = collectionManager.isEmpty()
-                    ? "ваша коллекция пуста"
-                    : collectionManager.entrySet()
-                    .stream()
-                    .map(entry -> entry.getKey() + " : " + entry.getValue().toString())
-                    .collect(Collectors.joining("\n"));
-            return Response.success(result);
-        } catch (SQLException e) {
-            return Response.error("ошибка загрузки коллекции: " + e.getMessage());
+        if (userId == null || userId.isEmpty()) {
+            return Response.error("требуется авторизация");
         }
+        String result = collectionManager.isEmpty()
+                ? "ваша коллекция пуста"
+                : collectionManager.entrySet()
+                .stream()
+                .map(entry -> entry.getKey() + " : " + entry.getValue().toString())
+                .collect(Collectors.joining("\n"));
+        return Response.success(result);
     }
 
     @Override

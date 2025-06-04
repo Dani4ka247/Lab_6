@@ -11,6 +11,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
 
+import static com.vehicleShared.managers.CollectionManager.requestVehicleInformation;
+
 public class Client {
     private final String serverAddress;
     private final int serverPort;
@@ -24,10 +26,9 @@ public class Client {
     public void start() {
         try (SocketChannel socketChannel = SocketChannel.open()) {
             socketChannel.connect(new InetSocketAddress(serverAddress, serverPort));
-            System.out.println("Успешно подключен к серверу");
             Scanner scanner = new Scanner(System.in);
+            System.out.print("Введите login/register/exit: ");
             while (true) {
-                System.out.print("Введите команду (login/register): ");
                 String command = scanner.nextLine().trim();
                 if (command.equals("exit")) {
                     break;
@@ -39,25 +40,27 @@ public class Client {
                     String password = scanner.nextLine().trim();
                     Request request = new Request(command, null, login, password);
                     Response response = sendRequest(socketChannel, request);
-                    System.out.println(response.getMessage());
+                    System.out.println("Ответ сервера: " + response.getMessage());
                     if (response.isSuccess() && command.equals("login")) {
                         currentLogin = login;
                         handleAuthenticatedCommands(scanner, socketChannel);
                     }
                 } else {
-                    System.out.println("Неизвестная команда. Используйте login или register");
+                    System.out.println("Ответ сервера: используйте login или register");
+                    System.out.print("Введите команду: ");
                 }
             }
         } catch (IOException e) {
-            System.err.println("Ошибка подключения: " + e.getMessage());
+            System.out.println("Ответ сервера: ошибка подключения: " + e.getMessage());
         }
     }
 
     private void handleAuthenticatedCommands(Scanner scanner, SocketChannel socketChannel) {
+        System.out.print("Введите команду: ");
         while (true) {
-            System.out.print("Введите команду (help/show/insert/update/remove/exit): ");
             String input = scanner.nextLine().trim();
             if (input.equals("exit")) {
+                System.out.print("Введите login/register/exit: ");
                 break;
             }
             String[] parts = input.split("\\s+", 2);
@@ -66,46 +69,25 @@ public class Client {
             Vehicle vehicle = null;
             if (command.equals("insert") || command.equals("update") || command.equals("replace_if_lower")) {
                 if (argument == null) {
-                    System.out.println("Нужен id");
+                    System.out.println("Ответ сервера: нужен аргумент");
+                    System.out.print("Введите команду: ");
                     continue;
                 }
-                vehicle = createVehicle(scanner, Long.parseLong(argument));
+                vehicle = requestVehicleInformation(scanner, Long.parseLong(argument));
             }
             Request request = new Request(command, argument, currentLogin, null);
             request.setVehicle(vehicle);
-            System.out.println("отправляем запрос: " + command);
             Response response = sendRequest(socketChannel, request);
-            if (response.requiresVehicle()) {
-                System.out.println("Введите данные для vehicle:");
-                vehicle = createVehicle(scanner, argument != null ? Long.parseLong(argument) : 0);
-                request = new Request(command, argument, currentLogin, null);
-                request.setVehicle(vehicle);
-                response = sendRequest(socketChannel, request);
-            }
+            System.out.println("Ответ сервера: " + response.getMessage());
+            System.out.print("Введите команду: ");
         }
     }
 
-    private Vehicle createVehicle(Scanner scanner, long id) {
-        System.out.print("Введите название машины: ");
-        String name = scanner.nextLine().trim();
-        System.out.print("Введите координаты (x,y): ");
-        String[] coords = scanner.nextLine().trim().split(",");
-        float x = Float.parseFloat(coords[0]);
-        int y = Integer.parseInt(coords[1]);
-        System.out.print("Введите мощность двигателя: ");
-        float power = Float.parseFloat(scanner.nextLine().trim());
-        System.out.print("Выберите тип машины (1:CAR, 2:BOAT, 3:HOVERBOARD): ");
-        VehicleType type = VehicleType.values()[Integer.parseInt(scanner.nextLine().trim()) - 1];
-        System.out.print("Выберите тип топлива (1:GASOLINE, 2:KEROSENE, 3:ELECTRICITY, 4:MANPOWER, 5:NUCLEAR): ");
-        FuelType fuelType = FuelType.values()[Integer.parseInt(scanner.nextLine().trim()) - 1];
-        return new Vehicle(id, new Coordinates(x, y), name, power, type, fuelType);
-    }
 
     private Response sendRequest(SocketChannel socketChannel, Request request) {
         try {
             if (!socketChannel.isOpen() || !socketChannel.isConnected()) {
-                System.out.println("sendRequest: канал закрыт");
-                return Response.error("Канал закрыт");
+                return Response.error("канал закрыт");
             }
             socketChannel.socket().setSoTimeout(5000);
 
@@ -118,27 +100,23 @@ public class Client {
             buffer.putInt(data.length);
             buffer.put(data);
             buffer.flip();
-            int totalBytesWritten = 0;
             while (buffer.hasRemaining()) {
-                totalBytesWritten += socketChannel.write(buffer);
+                socketChannel.write(buffer);
             }
-            System.out.println("отправлен запрос: " + request.getCommand() + ", " + totalBytesWritten + " байт");
 
             ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
             int totalBytesRead = 0;
             while (totalBytesRead < 4) {
                 int bytesRead = socketChannel.read(lengthBuffer);
                 if (bytesRead == -1) {
-                    System.out.println("sendRequest: сервер отключился");
-                    return Response.error("Сервер отключился");
+                    return Response.error("сервер отключился");
                 }
                 totalBytesRead += bytesRead;
             }
             lengthBuffer.flip();
             int length = lengthBuffer.getInt();
             if (length <= 0 || length > 1_000_000) {
-                System.out.println("sendRequest: некорректная длина ответа: " + length);
-                return Response.error("Некорректная длина ответа");
+                return Response.error("некорректная длина ответа");
             }
 
             ByteBuffer dataBuffer = ByteBuffer.allocate(length);
@@ -146,8 +124,7 @@ public class Client {
             while (totalBytesRead < length) {
                 int bytesRead = socketChannel.read(dataBuffer);
                 if (bytesRead == -1) {
-                    System.out.println("sendRequest: сервер отключился при чтении данных");
-                    return Response.error("Сервер отключился");
+                    return Response.error("сервер отключился");
                 }
                 totalBytesRead += bytesRead;
             }
@@ -157,16 +134,12 @@ public class Client {
 
             try (ByteArrayInputStream bais = new ByteArrayInputStream(responseData);
                  ObjectInputStream ois = new ObjectInputStream(bais)) {
-                Response response = (Response) ois.readObject();
-                System.out.println("получен ответ: \n" + response.getMessage());
-                return response;
+                return (Response) ois.readObject();
             }
         } catch (SocketTimeoutException e) {
-            System.out.println("sendRequest: таймаут: " + e.getMessage());
-            return Response.error("Таймаут связи с сервером");
+            return Response.error("таймаут связи");
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("sendRequest: ошибка: " + e.getMessage());
-            return Response.error("Ошибка связи: " + e.getMessage());
+            return Response.error("ошибка связи: " + e.getMessage());
         }
     }
 }

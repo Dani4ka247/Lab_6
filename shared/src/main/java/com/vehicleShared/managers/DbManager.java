@@ -29,7 +29,6 @@ public class DbManager {
             log.info("попытка подключения к {} с пользователем {}", url, user);
             db = DriverManager.getConnection(url, user, password);
             db.setAutoCommit(true);
-            log.info("подключение успешно");
             return true;
         } catch (SQLException e) {
             log.error("ошибка подключения: {}, SQL state: {}", e.getMessage(), e.getSQLState());
@@ -50,13 +49,13 @@ public class DbManager {
 
     public synchronized List<Vehicle> loadFromDb(String userId) throws SQLException {
         if (!isDbConnected()) throw new SQLException("база не подключена");
+        if (userId == null) throw new SQLException("userId не указан");
         List<Vehicle> vehicles = new ArrayList<>();
-        String sql = userId == null ? "select * from s466080.vehicles" : "select * from s466080.vehicles where user_id = ?";
+        String sql = "select * from s466080.vehicles where user_id = ?";
         try (PreparedStatement stmt = db.prepareStatement(sql)) {
-            if (userId != null) stmt.setString(1, userId);
+            stmt.setString(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    System.out.println("обрабатываем строку id=" + rs.getLong("id"));
                     Vehicle vehicle = new Vehicle(
                             rs.getLong("id"),
                             new Coordinates(rs.getFloat("coordinates_x"), rs.getInt("coordinates_y")),

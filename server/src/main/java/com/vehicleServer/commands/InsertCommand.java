@@ -26,10 +26,8 @@ public class InsertCommand implements Command {
         try {
             long id = Long.parseLong(argument);
             vehicle.setId(id);
-            if (collectionManager.put(id, vehicle, userId) != null) {
-                return Response.success("vehicle добавлен");
-            }
-            return Response.error("ошибка добавления: проверь данные или права доступа");
+            collectionManager.put(id, vehicle, userId);
+            return Response.success("vehicle добавлен");
         } catch (NumberFormatException e) {
             return Response.error("id должен быть числом");
         } catch (Exception e) {
