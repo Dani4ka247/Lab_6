@@ -69,13 +69,15 @@ public class Client {
             String command = parts[0];
             String argument = parts.length > 1 ? parts[1] : null;
             Vehicle vehicle = null;
-            if (command.equals("insert") || command.equals("update") || command.equals("replace_if_lower")) {
+            if (command.equals("update") || command.equals("replace_if_lower")) {
                 if (argument == null) {
                     System.out.println("Ответ сервера: нужен id");
                     System.out.print("Введите команду: ");
                     continue;
                 }
                 vehicle = requestVehicleInformation(scanner, Long.parseLong(argument));
+            } else if (command.equals("insert")) {
+                vehicle = requestVehicleInformation(scanner);
             }
             Request request = new Request(command, argument, currentLogin, currentPassword);
             request.setVehicle(vehicle);

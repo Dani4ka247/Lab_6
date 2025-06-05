@@ -10,12 +10,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Lab7 prerelize 0.2">
+    <list default="true" id="c813bf21-eb97-4f14-a102-5d24fc997244" name="Changes" comment="Lab7 prerelize 0.3">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/client/src/main/java/com/vehicleClient/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/main/java/com/vehicleClient/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowByPower.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/ShowByPower.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/managers/CommandManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/serverNetwork/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/serverNetwork/Server.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/main/java/com/vehicleServer/commands/InsertCommand.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/CollectionManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/CollectionManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/DbManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/main/java/com/vehicleShared/managers/DbManager.java" afterDir="false" />
     </list>
@@ -307,7 +305,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749064598787</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Lab7 prerelize 0.3">
+      <option name="closed" value="true" />
+      <created>1749146013771</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1749146013771</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -339,6 +345,7 @@
     <MESSAGE value="Lab7 backup 3" />
     <MESSAGE value="Lab7 prerelize" />
     <MESSAGE value="Lab7 prerelize 0.2" />
-    <option name="LAST_COMMIT_MESSAGE" value="Lab7 prerelize 0.2" />
+    <MESSAGE value="Lab7 prerelize 0.3" />
+    <option name="LAST_COMMIT_MESSAGE" value="Lab7 prerelize 0.3" />
   </component>
 </project>

@@ -23,19 +23,22 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         }
     }
 
-    public void put(Long key, Vehicle vehicle, String userId) {
+    public boolean put(Vehicle vehicle, String userId) {
         try {
             if (vehicle.getName() == null || vehicle.getName().isEmpty() ||
                     vehicle.getCoordinates() == null || vehicle.getPower() <= 0 ||
                     vehicle.getType() == null || vehicle.getFuelType() == null ||
                     userId == null) {
+                return false; // невалидные данные
             }
             if (dbManager.addVehicle(vehicle, userId)) {
-                super.put(key, vehicle);
+                super.put(vehicle.getId(), vehicle);
+                return true;
             }
         } catch (SQLException e) {
             System.err.println("ошибка добавления: " + e.getMessage());
         }
+        return false;
     }
 
     public boolean update(long id, Vehicle vehicle, String userId) {
@@ -82,7 +85,7 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         Float enginePower = InputValidator.getValidInput(scanner, s -> {
             float power = Float.parseFloat(s);
             if (power <= 0) {
-                return 0f;
+                throw new IllegalArgumentException("мощность должна быть больше 0");
             }
             return power;
         }, "введите мощность двигателя машины: ", "мощность должна быть числом больше 0");
@@ -90,5 +93,12 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         FuelType fuelType = InputValidator.getValidInput(scanner, s -> FuelType.values()[Integer.parseInt(s.trim()) - 1], "выберите тип топлива {1:GASOLINE, 2:KEROSENE, 3:ELECTRICITY, 4:MANPOWER, 5:NUCLEAR}: ", "введи номер топлива");
         return new Vehicle(id, coordinates, vehicleName, enginePower, vehicleType, fuelType);
     }
-    public DbManager getDbManager(){return dbManager;}
+
+    public static Vehicle requestVehicleInformation(Scanner scanner) {
+        return requestVehicleInformation(scanner, 0L); // id игнорируется, база задаёт
+    }
+
+    public DbManager getDbManager() {
+        return dbManager;
+    }
 }

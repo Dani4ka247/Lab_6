@@ -14,22 +14,17 @@ public class InsertCommand implements Command {
 
     @Override
     public Response execute(Request request) {
-        String argument = request.getArgument();
         String userId = request.getLogin();
         Vehicle vehicle = request.getVehicle();
         if (vehicle == null) {
             return Response.success("нужен объект vehicle", true);
         }
-        if (argument == null || argument.isEmpty()) {
-            return Response.error("нужен id");
-        }
         try {
-            long id = Long.parseLong(argument);
-            vehicle.setId(id);
-            collectionManager.put(id, vehicle, userId);
-            return Response.success("vehicle добавлен");
-        } catch (NumberFormatException e) {
-            return Response.error("id должен быть числом");
+            if (collectionManager.put(vehicle, userId)) {
+                return Response.success("vehicle добавлен, id=" + vehicle.getId());
+            } else {
+                return Response.error("ошибка добавления: невалидные данные");
+            }
         } catch (Exception e) {
             return Response.error("ошибка: " + e.getMessage());
         }
@@ -37,6 +32,6 @@ public class InsertCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "добавляет новый элемент в коллекцию с указанным id";
+        return "добавляет новый элемент в коллекцию";
     }
 }

@@ -123,32 +123,25 @@ public class DbManager {
         }
     }
 
-    public synchronized boolean addVehicle(Vehicle vehicle, String userId) throws SQLException {
-        if (db == null) throw new SQLException("база не подключена");
-        if (vehicle.getName() == null || vehicle.getName().isEmpty() ||
-                vehicle.getCoordinates() == null || vehicle.getPower() <= 0 ||
-                vehicle.getType() == null || vehicle.getFuelType() == null ||
-                userId == null) {
-            throw new SQLException("некорректные данные машины или пользователь");
-        }
-        PreparedStatement stmt = db.prepareStatement(
-                "insert into s466080.vehicles (name, coordinates_x, coordinates_y, creation_date, engine_power, vehicle_type, fuel_type, user_id) values (?, ?, ?, ?, ?, ?, ?, ?)",
-                Statement.RETURN_GENERATED_KEYS
-        );
-        stmt.setString(1, vehicle.getName());
-        stmt.setFloat(2, vehicle.getCoordinates().getX());
-        stmt.setInt(3, vehicle.getCoordinates().getY());
-        stmt.setTimestamp(4, Timestamp.valueOf(vehicle.getCreationDate().toLocalDateTime()));
-        stmt.setFloat(5, vehicle.getPower());
-        stmt.setString(6, vehicle.getType().name());
-        stmt.setString(7, vehicle.getFuelType().name());
-        stmt.setString(8, userId);
-        int rows = stmt.executeUpdate();
-        if (rows > 0) {
-            ResultSet rs = stmt.getGeneratedKeys();
-            if (rs.next()) {
-                vehicle.setId(rs.getLong(1));
-                return true;
+    public boolean addVehicle(Vehicle vehicle, String userId) throws SQLException {
+        if (!isDbConnected()) throw new SQLException("база не подключена");
+        String sql = "insert into s466080.vehicles (name, coordinates_x, coordinates_y, creation_date, engine_power, vehicle_type, fuel_type, user_id) values (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = db.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, vehicle.getName());
+            stmt.setFloat(2, vehicle.getCoordinates().getX());
+            stmt.setInt(3, vehicle.getCoordinates().getY());
+            stmt.setTimestamp(4, Timestamp.from(vehicle.getCreationDate().toInstant()));
+            stmt.setFloat(5, vehicle.getPower());
+            stmt.setString(6, vehicle.getType().name());
+            stmt.setString(7, vehicle.getFuelType().name());
+            stmt.setString(8, userId);
+            int rows = stmt.executeUpdate();
+            if (rows > 0) {
+                ResultSet rs = stmt.getGeneratedKeys();
+                if (rs.next()) {
+                    vehicle.setId(rs.getLong(1)); // устанавливаем id
+                    return true;
+                }
             }
         }
         return false;
