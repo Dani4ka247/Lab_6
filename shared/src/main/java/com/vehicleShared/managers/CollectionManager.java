@@ -16,9 +16,9 @@ public class CollectionManager extends ConcurrentHashMap<Long, Vehicle> {
         this.dbManager = dbManager;
     }
 
-    public synchronized void loadFromDb(String userId) throws SQLException {
+    public synchronized void loadFromDb(String userId, boolean loadAll) throws SQLException {
         clear();
-        for (Vehicle vehicle : dbManager.loadFromDb(userId)) {
+        for (Vehicle vehicle : dbManager.loadFromDb(userId, loadAll)) {
             super.put(vehicle.getId(), vehicle);
         }
     }

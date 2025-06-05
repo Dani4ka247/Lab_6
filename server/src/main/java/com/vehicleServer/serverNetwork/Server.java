@@ -9,12 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -183,16 +180,16 @@ public class Server {
     }
 
     private void processClient(SocketChannel client, Request request, SelectionKey key) {
-        responderPool.submit(() -> {
+        new Thread(() -> {
             try {
                 Response response;
-                String login = request.getLogin();
+                String userId = request.getLogin();
                 boolean isAuthenticated = authenticatedUsers.containsKey(client);
 
-                if (request.getCommand().equals("login") && login != null) {
+                if (request.getCommand().equals("login") && userId != null) {
                     for (Map.Entry<SocketChannel, String> entry : authenticatedUsers.entrySet()) {
-                        if (entry.getValue().equals(login) && !entry.getKey().equals(client)) {
-                            response = Response.error("пользователь " + login + " уже авторизован");
+                        if (entry.getValue().equals(userId) && !entry.getKey().equals(client)) {
+                            response = Response.error("пользователь " + userId + " уже авторизован");
                             sendResponse(client, response, key);
                             return;
                         }
@@ -200,18 +197,18 @@ public class Server {
                 }
 
                 if (request.getCommand().equals("login")) {
-                    if (dbManager.authenticateUser(login, request.getPassword())) {
-                        authenticatedUsers.put(client, login);
+                    if (dbManager.authenticateUser(userId, request.getPassword())) {
+                        authenticatedUsers.put(client, userId);
                         response = Response.success("авторизация успешна");
-                        logger.info("пользователь {} авторизован", login);
+                        logger.info("пользователь {} авторизован", userId);
                     } else {
                         response = Response.error("неверный логин или пароль");
                     }
                 } else if (request.getCommand().equals("register")) {
-                    if (dbManager.registerUser(login, request.getPassword())) {
-                        authenticatedUsers.put(client, login);
+                    if (dbManager.registerUser(userId, request.getPassword())) {
+                        authenticatedUsers.put(client, userId);
                         response = Response.success("регистрация успешна");
-                        logger.info("пользователь {} зарегистрирован", login);
+                        logger.info("пользователь {} зарегистрирован", userId);
                     } else {
                         response = Response.error("пользователь уже существует или ошибка регистрации");
                     }
@@ -222,30 +219,33 @@ public class Server {
             } catch (Exception e) {
                 SocketAddress address = clientAddresses.getOrDefault(client, null);
                 logger.error("ошибка обработки запроса от {}: {}", address, e.getMessage());
-                try {
-                    sendResponse(client, Response.error("внутренняя ошибка сервера: " + e.getMessage()), key);
-                } catch (IOException ex) {
-                    logger.error("ошибка отправки ответа: {}", ex.getMessage());
-                    disconnectClient(client);
-                }
+                sendResponse(client, Response.error("внутренняя ошибка сервера: " + e.getMessage()), key);
             }
-        });
+        }).start();
     }
 
-    private void sendResponse(SocketChannel client, Response response, SelectionKey key) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-            oos.writeObject(response);
-        }
-        byte[] data = baos.toByteArray();
-        ByteBuffer buffer = ByteBuffer.allocate(4 + data.length);
-        buffer.putInt(data.length);
-        buffer.put(data);
-        buffer.flip();
-        while (buffer.hasRemaining()) {
-            client.write(buffer);
-        }
-        client.register(key.selector(), SelectionKey.OP_READ);
+    private void sendResponse(SocketChannel client, Response response, SelectionKey key) {
+        responderPool.submit(() -> {
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+                    oos.writeObject(response);
+                }
+                byte[] data = baos.toByteArray();
+                ByteBuffer buffer = ByteBuffer.allocate(4 + data.length);
+                buffer.putInt(data.length);
+                buffer.put(data);
+                buffer.flip();
+                while (buffer.hasRemaining()) {
+                    client.write(buffer);
+                }
+                client.register(key.selector(), SelectionKey.OP_READ);
+            } catch (IOException e) {
+                SocketAddress address = clientAddresses.getOrDefault(client, null);
+                logger.error("ошибка отправки ответа клиенту {}: {}", address, e.getMessage());
+                disconnectClient(key);
+            }
+        });
     }
 
     private void disconnectClient(SelectionKey key) {

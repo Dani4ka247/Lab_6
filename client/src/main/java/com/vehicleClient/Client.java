@@ -17,6 +17,7 @@ public class Client {
     private final String serverAddress;
     private final int serverPort;
     private String currentLogin;
+    private String currentPassword;
 
     public Client(String serverAddress, int serverPort) {
         this.serverAddress = serverAddress;
@@ -43,15 +44,16 @@ public class Client {
                     System.out.println("Ответ сервера: " + response.getMessage());
                     if (response.isSuccess() && command.equals("login")) {
                         currentLogin = login;
+                        currentPassword = password;
                         handleAuthenticatedCommands(scanner, socketChannel);
                     }
                 } else {
                     System.out.println("Ответ сервера: используйте login или register");
-                    System.out.print("Введите команду: ");
+                    System.out.print("Введите login/register/exit: ");
                 }
             }
         } catch (IOException e) {
-            System.out.println("Ответ сервера: ошибка подключения: " + e.getMessage());
+            System.out.println("ошибка подключения: " + e.getMessage());
         }
     }
 
@@ -69,20 +71,19 @@ public class Client {
             Vehicle vehicle = null;
             if (command.equals("insert") || command.equals("update") || command.equals("replace_if_lower")) {
                 if (argument == null) {
-                    System.out.println("Ответ сервера: нужен аргумент");
+                    System.out.println("Ответ сервера: нужен id");
                     System.out.print("Введите команду: ");
                     continue;
                 }
                 vehicle = requestVehicleInformation(scanner, Long.parseLong(argument));
             }
-            Request request = new Request(command, argument, currentLogin, null);
+            Request request = new Request(command, argument, currentLogin, currentPassword);
             request.setVehicle(vehicle);
             Response response = sendRequest(socketChannel, request);
             System.out.println("Ответ сервера: " + response.getMessage());
             System.out.print("Введите команду: ");
         }
     }
-
 
     private Response sendRequest(SocketChannel socketChannel, Request request) {
         try {

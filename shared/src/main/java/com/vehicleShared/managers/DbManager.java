@@ -47,13 +47,12 @@ public class DbManager {
         }
     }
 
-    public synchronized List<Vehicle> loadFromDb(String userId) throws SQLException {
+    public synchronized List<Vehicle> loadFromDb(String userId, boolean loadAll) throws SQLException {
         if (!isDbConnected()) throw new SQLException("база не подключена");
-        if (userId == null) throw new SQLException("userId не указан");
         List<Vehicle> vehicles = new ArrayList<>();
-        String sql = "select * from s466080.vehicles where user_id = ?";
+        String sql = loadAll ? "select * from s466080.vehicles" : "select * from s466080.vehicles where user_id = ?";
         try (PreparedStatement stmt = db.prepareStatement(sql)) {
-            stmt.setString(1, userId);
+            if (!loadAll) stmt.setString(1, userId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Vehicle vehicle = new Vehicle(
@@ -72,7 +71,7 @@ public class DbManager {
                 }
             }
         }
-        log.info("загружено {} записей для userId={}", vehicles.size(), userId);
+        log.info("загружено {} записей для userId={}", vehicles.size(), loadAll ? "все" : userId);
         return vehicles;
     }
 

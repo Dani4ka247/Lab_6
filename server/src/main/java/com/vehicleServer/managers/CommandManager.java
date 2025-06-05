@@ -50,12 +50,17 @@ public class CommandManager {
             return Response.error("команда '" + commandName + "' не найдена. используйте 'help'");
         }
         String userId = request.getLogin();
+        boolean loadAll = commandName.equals("show") || commandName.equals("info") ||
+                commandName.equals("sum_of_engine_power") || commandName.equals("show_sorted_by_power");
         if (!commandName.equals("login") && !commandName.equals("register") && !commandName.equals("help")) {
             if (!isAuthenticated || userId == null || userId.isEmpty()) {
                 return Response.error("требуется авторизация");
             }
             try {
-                collectionManager.loadFromDb(userId);
+                if (!dbManager.authenticateUser(userId, request.getPassword())) {
+                    return Response.error("неверный пароль");
+                }
+                collectionManager.loadFromDb(userId, loadAll);
             } catch (SQLException e) {
                 logger.error("ошибка загрузки коллекции для userId={}: {}", userId, e.getMessage());
                 return Response.error("ошибка загрузки коллекции: " + e.getMessage());

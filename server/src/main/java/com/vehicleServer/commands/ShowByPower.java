@@ -16,7 +16,7 @@ public class ShowByPower implements Command {
     @Override
     public Response execute(Request request) {
         try {
-            collectionManager.getDbManager().loadFromDb(request.getLogin());
+            collectionManager.getDbManager().loadFromDb(request.getLogin(),true);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
